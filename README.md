@@ -1,0 +1,89 @@
+# Intro
+
+transparent-proxy is a http-proxy that acts in a transparent way.
+
+# Quick Start
+
+## Install
+
+```bash
+npm i transparent-proxy
+```
+
+```bash
+npm install -g transparent-proxy
+```
+
+## Use
+
+```javascript
+const ProxyServer = require('transparent-proxy');
+
+//init ProxyServer
+const server = ProxyServer();
+
+//starting server on port 8080
+server.listen(8080, '0.0.0.0', function () {
+    console.log('TCP-Proxy-Server started!', server.address());
+});
+```
+
+## Options Object
+
+| Param  | Type                | Description  |
+| ------ | ------------------- | ------------ |
+|options | <code>Object</code> |  The options object. |
+|[options.upstream] | <code>Function</code> |  The proxy to be used to upstreaming requests. |
+
+
+## Upstream to other proxy
+
+If you don't want to use the host of active instance self, then you need to upstream connections to another http-proxy.
+This can be done with `upstream` attribute.
+
+```javascript
+const ProxyServer = require('transparent-proxy');
+
+const server = ProxyServer({
+    upstream: function () {
+          return 'x.x.x.x:3128'; // upstream to other proxy
+    }
+});
+
+//starting server on port 8080
+server.listen(8080, '0.0.0.0', function () {
+    console.log('TCP-Proxy-Server started!', server.address());
+});
+```
+
+## Upstream
+
+| Param  | Type                | Description  |
+| ------ | ------------------- | ------------ |
+|data | <code>Buffer</code> |  The received data. |
+|bridgedConnection | <code>Socket</code> |  The socket instance |
+|bridgedConnectionId | <code>String</code> |  The id of connection. (IP:PORT) |
+
+## Examples
+
+This example upstreams only requests to ifconfig.me to another proxy, for all other requests will be used localhost.
+
+```javascript
+const ProxyServer = require('transparent-proxy');
+
+const server = ProxyServer({
+    upstream: function (data, bridgedConnection, bridgedConnectionId) {
+        if (~(data.toString().indexOf('ifconfig.me'))) {
+            return 'x.x.x.x:3128'; // upstream to other proxy
+        } else {
+            return 'localhost' //upstream to localhost
+        }
+    },
+});
+
+//starting server on port 8080
+server.listen(8080, '0.0.0.0', function () {
+    console.log('TCP-Proxy-Server started!', server.address());
+});
+```
+
