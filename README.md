@@ -10,10 +10,6 @@ transparent-proxy is a http-proxy that acts in a transparent way.
 npm i transparent-proxy
 ```
 
-```bash
-npm install -g transparent-proxy
-```
-
 ## Use
 
 ```javascript
@@ -62,11 +58,11 @@ server.listen(8080, '0.0.0.0', function () {
 | ------ | ------------------- | ------------ |
 |data | <code>Buffer</code> |  The received data. |
 |bridgedConnection | <code>Socket</code> |  The socket instance |
-|bridgedConnectionId | <code>String</code> |  The id of connection. (IP:PORT) |
+|bridgedConnectionId | <code>String</code> |  The id of connection `IP:PORT`. |
 
 ## Examples
 
-This example upstreams only requests to ifconfig.me to another proxy, for all other requests will be used localhost.
+This example upstreams only requests for ifconfig.me to another proxy, for all other requests will be used localhost.
 
 ```javascript
 const ProxyServer = require('transparent-proxy');
@@ -85,5 +81,16 @@ const server = ProxyServer({
 server.listen(8080, '0.0.0.0', function () {
     console.log('TCP-Proxy-Server started!', server.address());
 });
+```
+
+Testing with `curl`:
+
+```bash
+curl -x 127.0.0.1:8080 https://ifconfig.me
+x.x.x.x
+```
+```bash
+curl -x 127.0.0.1:8080 https://ifconfig.co
+y.y.y.y
 ```
 
