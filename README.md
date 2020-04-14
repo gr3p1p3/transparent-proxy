@@ -1,7 +1,10 @@
 # Intro
 
-transparent-proxy is a http-proxy that acts in a transparent way.
+transparent-proxy is a http-proxy that acts in a *REAL* transparent way.
 
+This module was built on top of TCP-level to avoid header-stripping problem of nodejs http(s)-modules.
+
+ 
 # Quick Start
 
 ## Install
@@ -30,6 +33,7 @@ server.listen(8080, '0.0.0.0', function () {
 | ------ | ------------------- | ------------ |
 |options | <code>Object</code> |  The options object. |
 |[options.upstream] | <code>Function</code> |  The proxy to be used to upstreaming requests. |
+|[options.tcpOutgoingAddress] | <code>Function</code> |  The localAddress to use while sending requests |
 
 ## getBridgedConnections()
 
@@ -48,7 +52,9 @@ setInterval(function showOpenSockets() {
 }, 2000);
 ```
 
-## Upstream
+## `upstream` & `tcpOutgoingAddress` Options
+
+The options are functions having follow parameters:
 
 | Param  | Type                | Description  |
 | ------ | ------------------- | ------------ |
@@ -56,6 +62,10 @@ setInterval(function showOpenSockets() {
 |bridgedConnection | <code>Socket</code> |  The socket instance |
 |bridgedConnectionId | <code>String</code> |  The id of connection `IP:PORT`. |
 
+- upstream-Function need to return a String with format -> IP:PORT of used http-proxy. If 'localhost' is returned, then the host-self will be used as proxy.
+- tcpOutgoingAddress-Function need to return a String with format -> IP. 
+
+These functions will be executed before first tcp-socket-connection is established.
 
 ## Upstream to other proxy
 
