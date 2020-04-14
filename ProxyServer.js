@@ -64,7 +64,11 @@ function ProxyServer(options) {
                         bridgedConnections[remoteID].client = new net.Socket();
 
                         bridgedConnections[remoteID].client
-                            .connect(PORT, ADDRESS, function onTunnelConnectionOpen() {
+                            .connect({
+                                port: PORT,
+                                host: ADDRESS,
+                                // localAddress: 'x.x.x.x' THIS ONLY MAKe 1to1 connection in case of multiple NICs
+                            }, function onTunnelConnectionOpen() {
                                 if (isUsingUpstreamToProxy(upstream, {
                                     data,
                                     bridgedConnection: bridgedConnections[remoteID],
@@ -83,7 +87,6 @@ function ProxyServer(options) {
                                 resetSockets(bridgedConnections[remoteID], remoteID);
                             })
                             .on('error', function handleError(err) {
-                                console.log('ERROR=>', err.code, remoteID);
                                 resetSockets(bridgedConnections[remoteID], remoteID);
                             });
 
@@ -118,18 +121,17 @@ function ProxyServer(options) {
                                 resetSockets(bridgedConnections[remoteID], remoteID);
                             })
                             .on('error', function handleError(err) {
-                                console.log('ERROR=>', err.code, remoteID);
                                 resetSockets(bridgedConnections[remoteID], remoteID);
                             });
 
                     } else if (bridgedConnections[remoteID] && bridgedConnections[remoteID].client) {
                         data = (injectData && typeof injectData === 'function') ? injectData(data, bridgedConnections[remoteID], remoteID) : data;
                         clientWrite(bridgedConnections[remoteID], data);
+                        console.log(bridgedConnections[remoteID].client.localAddress)
                     }
                 }
             })
             .on('error', function handleError(err) {
-                console.log('ERROR=>', err.code, remoteID);
                 resetSockets(bridgedConnections[remoteID], remoteID);
             })
             .on('close', function () {
