@@ -31,6 +31,22 @@ server.listen(8080, '0.0.0.0', function () {
 |options | <code>Object</code> |  The options object. |
 |[options.upstream] | <code>Function</code> |  The proxy to be used to upstreaming requests. |
 
+## getBridgedConnections()
+
+```javascript
+const ProxyServer = require('transparent-proxy');
+const server = ProxyServer();
+
+//starting server on port 8080
+server.listen(8080, '0.0.0.0', function () {
+    console.log('Proxy-Server started!', server.address());
+});
+
+setInterval(function showOpenSockets() {
+    const bridgedConnections = server.getBridgedConnections();
+    console.log([new Date()], 'OPEN =>', Object.keys(bridgedConnections).length)
+}, 2000);
+```
 
 ## Upstream
 

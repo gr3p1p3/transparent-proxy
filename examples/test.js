@@ -17,9 +17,6 @@ const server = ProxyServer({
     // }
 });
 
-//init ProxyServer
-// const server = ProxyServer();
-
 //starting server on port 1555
 server.listen(1555, '0.0.0.0', function () {
     console.log('TCP-Proxy-Server started!', server.address());
