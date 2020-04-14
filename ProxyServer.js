@@ -69,7 +69,7 @@ function ProxyServer(options) {
                                     data,
                                     bridgedConnection: bridgedConnections[remoteID],
                                     remoteID
-                                })) { //TODO HERE the problem with upstream... if upstream dont return proxy but direct host:port...it will
+                                })) {
                                     data = (injectData && typeof injectData === 'function') ? injectData(data, bridgedConnections[remoteID], remoteID) : data;
                                     clientWrite(bridgedConnections[remoteID], data)
                                 } else {

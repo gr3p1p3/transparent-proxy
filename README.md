@@ -32,6 +32,15 @@ server.listen(8080, '0.0.0.0', function () {
 |[options.upstream] | <code>Function</code> |  The proxy to be used to upstreaming requests. |
 
 
+## Upstream
+
+| Param  | Type                | Description  |
+| ------ | ------------------- | ------------ |
+|data | <code>Buffer</code> |  The received data. |
+|bridgedConnection | <code>Socket</code> |  The socket instance |
+|bridgedConnectionId | <code>String</code> |  The id of connection `IP:PORT`. |
+
+
 ## Upstream to other proxy
 
 If you don't want to use the host of active instance self, then you need to upstream connections to another http-proxy.
@@ -52,14 +61,6 @@ server.listen(8080, '0.0.0.0', function () {
 });
 ```
 
-## Upstream
-
-| Param  | Type                | Description  |
-| ------ | ------------------- | ------------ |
-|data | <code>Buffer</code> |  The received data. |
-|bridgedConnection | <code>Socket</code> |  The socket instance |
-|bridgedConnectionId | <code>String</code> |  The id of connection `IP:PORT`. |
-
 ## Examples
 
 This example upstreams only requests for ifconfig.me to another proxy, for all other requests will be used localhost.
@@ -72,7 +73,7 @@ const server = ProxyServer({
         if (~(data.toString().indexOf('ifconfig.me'))) {
             return 'x.x.x.x:3128'; // upstream to other proxy
         } else {
-            return 'localhost' //upstream to localhost
+            return 'localhost'; //upstream to localhost
         }
     },
 });
