@@ -40,7 +40,7 @@ server.listen(8080, '0.0.0.0', function () {
 
 ```javascript
 const ProxyServer = require('transparent-proxy');
-const server = ProxyServer();
+const server = new ProxyServer();
 
 //starting server on port 8080
 server.listen(8080, '0.0.0.0', function () {
@@ -76,7 +76,7 @@ This can be done with `upstream` attribute.
 ```javascript
 const ProxyServer = require('transparent-proxy');
 
-const server = ProxyServer({
+const server = new ProxyServer({
     upstream: function () {
           return 'x.x.x.x:3128'; // upstream to other proxy
     }
@@ -95,7 +95,7 @@ This example upstreams only requests for ifconfig.me to another proxy, for all o
 ```javascript
 const ProxyServer = require('transparent-proxy');
 
-const server = ProxyServer({
+const server = new ProxyServer({
     upstream: function (data, bridgedConnection, bridgedConnectionId) {
         if (~(data.toString().indexOf('ifconfig.me'))) {
             return 'x.x.x.x:3128'; // upstream to other proxy
