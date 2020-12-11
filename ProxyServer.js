@@ -59,7 +59,7 @@ class ProxyServer extends net.createServer {
                 }
 
                 try {
-                    if (dataString && dataString.length) {
+                    if (dataString && dataString.length > 0) {
                         const split = dataString.split(CLRF);
                         const firstHeaderRow = split[0];
 
@@ -146,7 +146,7 @@ class ProxyServer extends net.createServer {
 
                         }
                         else if (bridgedConnections[remoteID] && bridgedConnections[remoteID].client) {
-                            //ToDo injectData will not work on opened https-connection due to ssl (i.e. found a way to implement sslStrip)
+                            //ToDo injectData will not work on opened https-connection due to ssl (i.e. found a way to implement sslStrip or interception)
                             // onDirectConnectionOpen();
                             clientRequestWrite(bridgedConnections[remoteID], data);
                         }
@@ -170,7 +170,7 @@ class ProxyServer extends net.createServer {
         this.bridgedConnections = bridgedConnections;
     }
 
-    getBridgedConnections = function () {
+    getBridgedConnections() {
         return this.bridgedConnections;
     };
 }
