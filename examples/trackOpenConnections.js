@@ -1,6 +1,6 @@
 const ProxyServer = require('../ProxyServer');
 
-const server = ProxyServer();
+const server = new ProxyServer();
 
 //starting server on port 1555
 server.listen(1555, '0.0.0.0', function () {

@@ -1,13 +1,15 @@
 const ProxyServer = require('../ProxyServer');
 
-const server = ProxyServer({
+const server = new ProxyServer({
     upstream: function (data, bridgedConnection, bridgedConnectionId) {
-        console.log(bridgedConnectionId);
+        console.log('Upstreaming for:', bridgedConnectionId);
         if (~(data.toString().indexOf('ifconfig.me'))) {
-            return '5.230.65.45:8080'; //using myProxy
-        } else if (~(data.toString().indexOf('ifconfig.co'))) {
+            return 'myProxy:555'; //using myProxy
+        }
+        else if (~(data.toString().indexOf('ifconfig.co'))) {
             return 'localhost'; // upstreaming to localhost
-        } else {
+        }
+        else {
             return '127.0.0.1:9080' //using tor
         }
     },

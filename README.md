@@ -1,8 +1,9 @@
 # Intro
 
-transparent-proxy is a http-proxy that acts in a *REAL* transparent way.
+**transparent-proxy** extends the native [net.createServer](https://nodejs.org/api/net.html#net_net_createserver_options_connectionlistener) and it acts as a http-proxy (Think like Squid).
 
-This module was built on top of TCP-level to avoid header-stripping problem of nodejs http(s)-modules.
+
+This module was built on top of TCP-level to avoid header-stripping problem of nodejs http(s)-modules. 
 
  
 # Quick Start
@@ -19,7 +20,7 @@ npm i transparent-proxy
 const ProxyServer = require('transparent-proxy');
 
 //init ProxyServer
-const server = ProxyServer();
+const server = new ProxyServer();
 
 //starting server on port 8080
 server.listen(8080, '0.0.0.0', function () {
