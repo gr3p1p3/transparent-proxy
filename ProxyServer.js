@@ -22,10 +22,9 @@ class ProxyServer extends net.createServer {
     constructor(options) {
         const {upstream, tcpOutgoingAddress, verbose, injectData, injectResponse}
             = options || {}; //using empty object as default options
-        const bridgedConnections = {};
-
         const logger = new Logger(verbose);
 
+        const bridgedConnections = {};
         function onConnectedClientHandling(clientSocket) {
             const remotePort = clientSocket.remotePort;
             const remoteAddress = clientSocket.remoteAddress;
@@ -38,6 +37,13 @@ class ProxyServer extends net.createServer {
                     logger.error(err);
                 }
                 resetSockets(remoteID, bridgedConnections);
+            }
+
+            function onDataFromUpstream(dataFromUpStream) {
+                const responseData = isFunction(injectResponse)
+                    ? injectResponse(dataFromUpStream, bridgedConnections[remoteID], remoteID)
+                    : dataFromUpStream;
+                clientResponseWrite(bridgedConnections[remoteID], responseData)
             }
 
             function onDataFromClient(data) {
@@ -85,13 +91,7 @@ class ProxyServer extends net.createServer {
                                         clientResponseWrite(bridgedConnections[remoteID], OK + CLRF + CLRF);
                                     }
                                 })
-                                .on(DATA, function onDataFromUpstream(dataFromUpStream) {
-                                    const responseData = isFunction(injectResponse)
-                                        ? injectResponse(dataFromUpStream, bridgedConnections[remoteID], remoteID)
-                                        : dataFromUpStream;
-
-                                    clientResponseWrite(bridgedConnections[remoteID], responseData);
-                                })
+                                .on(DATA, onDataFromUpstream)
                                 .on(CLOSE, onClose)
                                 .on(ERROR, onClose);
 
@@ -141,12 +141,7 @@ class ProxyServer extends net.createServer {
 
                                     clientRequestWrite(bridgedConnections[remoteID], requestData);
                                 })
-                                .on(DATA, function (dataFromUpStream) {
-                                    const responseData = isFunction(injectResponse)
-                                        ? injectResponse(dataFromUpStream, bridgedConnections[remoteID], remoteID)
-                                        : dataFromUpStream;
-                                    clientResponseWrite(bridgedConnections[remoteID], responseData)
-                                })
+                                .on(DATA, onDataFromUpstream)
                                 .on(CLOSE, onClose)
                                 .on(ERROR, onClose);
 
