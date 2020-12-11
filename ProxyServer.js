@@ -31,7 +31,7 @@ class ProxyServer extends net.createServer {
 
             function onClose(err) {
                 if (err && err instanceof Error) {
-                    throw err;
+                    logger.error(err);
                 }
                 resetSockets(remoteID, bridgedConnections);
             }
@@ -65,7 +65,11 @@ class ProxyServer extends net.createServer {
                             };
                             bridgedConnections[remoteID].client = new net.Socket();
                             bridgedConnections[remoteID].client
-                                .connect(connectionOpt, function onTunnelConnectionOpen() {
+                                .connect(connectionOpt, function onTunnelConnectionOpen(connectionError) {
+                                    if (connectionError) {
+                                        return onClose(connectionError);
+                                    }
+
                                     if (isFunction(upstream)) {
                                         const requestData = isFunction(injectData)
                                             ? injectData(data, bridgedConnections[remoteID], remoteID)
@@ -155,6 +159,7 @@ class ProxyServer extends net.createServer {
                 }
                 catch (err) {
                     clientResponseWrite(bridgedConnections[remoteID], NOT_OK + CLRF + CLRF);
+                    onClose();
                 }
             }
 

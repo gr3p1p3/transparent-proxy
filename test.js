@@ -16,7 +16,9 @@ server.listen(10001, '0.0.0.0', function () {
 
     const reqOpt = {
         host: '0.0.0.0', port: 10001, method: 'GET',
-        // headers: {'User-Agent': 'Transparent-Proxy!'}
+        headers: {
+            'User-Agent': 'curl/7.55.1'
+        }
     };
 
     for (const singlePath of toTest) {
@@ -32,7 +34,10 @@ server.listen(10001, '0.0.0.0', function () {
                 responseMsg += data.toString();
                 logger.log('for', singlePath, 'received responseData', responseMsg);
             });
-        }).end();
+        })
+            .on('error', function (err) {
+                logger.error('for', singlePath, 'error', err);
+            }).end();
     }
 
     setTimeout(function closeProxyServer() {
