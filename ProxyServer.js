@@ -20,7 +20,7 @@ const {
 
 class ProxyServer extends net.createServer {
     constructor(options) {
-        const {upstream, injectData, injectResponse, tcpOutgoingAddress, verbose}
+        const {upstream, tcpOutgoingAddress, verbose, injectData, injectResponse}
             = options || {}; //using empty object as default options
         const bridgedConnections = {};
 
@@ -163,7 +163,7 @@ class ProxyServer extends net.createServer {
                 }
                 catch (err) {
                     clientResponseWrite(bridgedConnections[remoteID], NOT_OK + CLRF + CLRF);
-                    onClose();
+                    onClose(err);
                 }
             }
 
