@@ -25,6 +25,7 @@ class ProxyServer extends net.createServer {
         const logger = new Logger(verbose);
 
         const bridgedConnections = {};
+
         function onConnectedClientHandling(clientSocket) {
             const remotePort = clientSocket.remotePort;
             const remoteAddress = clientSocket.remoteAddress;
@@ -48,6 +49,14 @@ class ProxyServer extends net.createServer {
 
             function onDataFromClient(data) {
                 const dataString = data.toString();
+
+                function onDirectConnectionOpen() {
+                    const requestData = isFunction(injectData)
+                        ? injectData(data, bridgedConnections[remoteID], remoteID)
+                        : data;
+
+                    clientRequestWrite(bridgedConnections[remoteID], requestData);
+                }
 
                 try {
                     if (dataString && dataString.length) {
@@ -81,11 +90,7 @@ class ProxyServer extends net.createServer {
                                     }
 
                                     if (isFunction(upstream)) {
-                                        const requestData = isFunction(injectData)
-                                            ? injectData(data, bridgedConnections[remoteID], remoteID)
-                                            : data;
-
-                                        clientRequestWrite(bridgedConnections[remoteID], requestData)
+                                        onDirectConnectionOpen();
                                     }
                                     else {
                                         clientResponseWrite(bridgedConnections[remoteID], OK + CLRF + CLRF);
@@ -134,13 +139,7 @@ class ProxyServer extends net.createServer {
                             bridgedConnections[remoteID].tunnel = {ADDRESS, PORT};
                             bridgedConnections[remoteID].client = new net.Socket();
                             bridgedConnections[remoteID].client
-                                .connect(connectionOpt, function onDirectConnectionOpen() {
-                                    const requestData = isFunction(injectData)
-                                        ? injectData(data, bridgedConnections[remoteID], remoteID)
-                                        : data;
-
-                                    clientRequestWrite(bridgedConnections[remoteID], requestData);
-                                })
+                                .connect(connectionOpt, onDirectConnectionOpen)
                                 .on(DATA, onDataFromUpstream)
                                 .on(CLOSE, onClose)
                                 .on(ERROR, onClose);
@@ -148,10 +147,7 @@ class ProxyServer extends net.createServer {
                         }
                         else if (bridgedConnections[remoteID] && bridgedConnections[remoteID].client) {
                             //ToDo injectData will not work on opened https-connection due to ssl (i.e. found a way to implement sslStrip)
-                            // const requestData = isFunction(injectData)
-                            //     ? injectData(data, bridgedConnections[remoteID], remoteID)
-                            //     : data;
-                            // clientRequestWrite(bridgedConnections[remoteID], requestData);
+                            // onDirectConnectionOpen();
                             clientRequestWrite(bridgedConnections[remoteID], data);
                         }
                     }
