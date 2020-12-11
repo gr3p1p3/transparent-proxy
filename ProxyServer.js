@@ -10,7 +10,11 @@ const getConnectionOptions = require('./lib/getConnectionOptions');
 const isFunction = require('./lib/isFunction');
 
 const {
-    BLANK, CLOSE, CLRF, CONNECT, DATA, EMPTY, ERROR, EXIT, HTTPS, HTTP_PORT, HTTPS_PORT, NOT_OK, OK, SEPARATOR, SLASH_REGEXP
+    BLANK, CLOSE, CLRF,
+    CONNECT, DATA, EMPTY, ERROR, EXIT,
+    HTTPS, HTTP_PORT, HTTPS_PORT,
+    NOT_OK, OK,
+    SEPARATOR, SLASH_REGEXP
 } = require('./lib/constants');
 
 
