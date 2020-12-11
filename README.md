@@ -1,6 +1,6 @@
 # Intro
 
-**transparent-proxy** extends the native [net.createServer](https://nodejs.org/api/net.html#net_net_createserver_options_connectionlistener) and it acts as a http-proxy (Think like Squid).
+**transparent-proxy** extends the native [net.createServer](https://nodejs.org/api/net.html#net_net_createserver_options_connectionlistener) and it acts as a http-proxy.
 
 
 This module was built on top of TCP-level to avoid header-stripping problem of nodejs http(s)-modules. 
