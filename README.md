@@ -33,6 +33,7 @@ server.listen(8080, '0.0.0.0', function () {
 | Param  | Type                | Description  |
 | ------ | ------------------- | ------------ |
 |options | <code>Object</code> |  The options object. |
+|[options.verbose] | <code>Boolean</code> |  Activate verbose mode |
 |[options.upstream] | <code>Function</code> |  The proxy to be used to upstreaming requests. |
 |[options.tcpOutgoingAddress] | <code>Function</code> |  The localAddress to use while sending requests |
 
