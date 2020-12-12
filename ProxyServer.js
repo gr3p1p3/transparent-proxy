@@ -105,7 +105,6 @@ class ProxyServer extends net.createServer {
                             && !bridgedConnections[remoteID].client) { // managing http
                             let ADDRESS, PORT;
                             const upstreamHost = firstHeaderRow.split(BLANK)[1];
-
                             const proxyToUse = usingUpstreamToProxy(upstream, {
                                 data,
                                 bridgedConnection: bridgedConnections[remoteID],
@@ -150,6 +149,7 @@ class ProxyServer extends net.createServer {
                             // onDirectConnectionOpen();
                             clientRequestWrite(bridgedConnections[remoteID], data);
                         }
+                        logger.log(remoteID, '=>', bridgedConnections[remoteID].tunnel);
                     }
                 }
                 catch (err) {
