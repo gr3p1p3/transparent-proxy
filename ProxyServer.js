@@ -35,7 +35,7 @@ class ProxyServer extends net.createServer {
 
             function onClose(err) {
                 if (err && err instanceof Error) {
-                    logger.error(err);
+                    logger.error(remoteID, err);
                 }
                 resetSockets(remoteID, bridgedConnections);
             }
