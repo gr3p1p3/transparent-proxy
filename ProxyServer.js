@@ -61,16 +61,42 @@ class ProxyServer extends net.createServer {
                 clientResponseWrite(bridgedConnections[remoteID], responseData)
             }
 
+            function onDirectConnectionOpen(srcData) {
+                const requestData = isFunction(injectData)
+                    ? injectData(srcData, bridgedConnections[remoteID], remoteID)
+                    : srcData;
+
+                clientRequestWrite(bridgedConnections[remoteID], requestData);
+            }
+
+            function prepareTunnel(data, firstHeaderRow) {
+                const upstreamHost = firstHeaderRow.split(BLANK)[1];
+                const proxyToUse = usingUpstreamToProxy(upstream, {
+                    data,
+                    bridgedConnection: bridgedConnections[remoteID],
+                    remoteID
+                });
+                const connectionOpt = getConnectionOptions(proxyToUse, upstreamHost);
+
+                //initializing socket and forwarding received request
+                bridgedConnections[remoteID].tunnel = {
+                    ADDRESS: connectionOpt.host,
+                    PORT: connectionOpt.port
+                };
+                bridgedConnections[remoteID].client = new net.Socket()
+                    .on(DATA, onDataFromUpstream)
+                    .on(CLOSE, onClose)
+                    .on(ERROR, onClose);
+
+                if (isFunction(tcpOutgoingAddress)) {
+                    connectionOpt.localAddress = tcpOutgoingAddress(data, bridgedConnections[remoteID], remoteID);
+                }
+
+                return connectionOpt;
+            }
+
             function onDataFromClient(data) {
                 const dataString = data.toString();
-
-                function onDirectConnectionOpen() {
-                    const requestData = isFunction(injectData)
-                        ? injectData(data, bridgedConnections[remoteID], remoteID)
-                        : data;
-
-                    clientRequestWrite(bridgedConnections[remoteID], requestData);
-                }
 
                 try {
                     if (dataString && dataString.length > 0) {
@@ -78,71 +104,33 @@ class ProxyServer extends net.createServer {
                         const firstHeaderRow = split[0];
 
                         if (~firstHeaderRow.indexOf(CONNECT)) { //managing HTTP-Tunnel & HTTPs
-                            const upstreamHost = firstHeaderRow.split(BLANK)[1];
-                            const proxyToUse = usingUpstreamToProxy(upstream, {
-                                data,
-                                bridgedConnection: bridgedConnections[remoteID],
-                                remoteID
-                            });
-                            const connectionOpt = getConnectionOptions(proxyToUse, upstreamHost);
-
-                            //initializing socket and forwarding received request
-                            bridgedConnections[remoteID].tunnel = {
-                                ADDRESS: connectionOpt.host,
-                                PORT: connectionOpt.port
-                            };
-                            bridgedConnections[remoteID].client = new net.Socket()
-                                .on(DATA, onDataFromUpstream)
-                                .on(CLOSE, onClose)
-                                .on(ERROR, onClose);
-
-                            if (isFunction(tcpOutgoingAddress)) {
-                                connectionOpt.localAddress = tcpOutgoingAddress(data, bridgedConnections[remoteID], remoteID);
-                            }
-
+                            const connectionOpt = prepareTunnel(data, firstHeaderRow);
                             bridgedConnections[remoteID].client
                                 .connect(connectionOpt, function onTunnelConnectionOpen(connectionError) {
                                     if (connectionError) {
                                         return onClose(connectionError);
                                     }
+                                    const proxyToUse = usingUpstreamToProxy(upstream, {
+                                        data,
+                                        bridgedConnection: bridgedConnections[remoteID],
+                                        remoteID
+                                    });
 
-                                    if (isFunction(upstream)) {
-                                        onDirectConnectionOpen();
+                                    if (!!proxyToUse) {
+                                        onDirectConnectionOpen(data);
                                     }
                                     else {
                                         clientResponseWrite(bridgedConnections[remoteID], OK + CLRF + CLRF);
                                     }
                                 })
-
-
                         }
                         else if (firstHeaderRow.indexOf(CONNECT) === -1
                             && !bridgedConnections[remoteID].client) { // managing http
-                            const upstreamHost = firstHeaderRow.split(BLANK)[1];
-                            const proxyToUse = usingUpstreamToProxy(upstream, {
-                                data,
-                                bridgedConnection: bridgedConnections[remoteID],
-                                remoteID
-                            });
-
-                            const connectionOpt = getConnectionOptions(proxyToUse, upstreamHost);
-
-                            //initializing socket and forwarding received request
-                            bridgedConnections[remoteID].tunnel = {
-                                ADDRESS: connectionOpt.host,
-                                PORT: connectionOpt.port
-                            };
-                            bridgedConnections[remoteID].client = new net.Socket()
-                                .on(DATA, onDataFromUpstream)
-                                .on(CLOSE, onClose)
-                                .on(ERROR, onClose);
-
-                            if (isFunction(tcpOutgoingAddress)) {
-                                connectionOpt.localAddress = tcpOutgoingAddress(data, bridgedConnections[remoteID], remoteID);
-                            }
-
+                            const connectionOpt = prepareTunnel(data, firstHeaderRow);
                             bridgedConnections[remoteID].client
-                                .connect(connectionOpt, onDirectConnectionOpen);
+                                .connect(connectionOpt, function onTunnelConnectionOpen(connectionError) {
+                                    onDirectConnectionOpen(data);
+                                });
                         }
                         else if (bridgedConnections[remoteID] && bridgedConnections[remoteID].client) {
                             //ToDo injectData will not work on opened https-connection due to ssl (i.e. found a way to implement sslStrip or interception)
