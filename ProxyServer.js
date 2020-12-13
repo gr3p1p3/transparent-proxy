@@ -40,15 +40,17 @@ class ProxyServer extends net.createServer {
             function onClose(err) {
                 if (err && err instanceof Error) {
                     //TODO handle more the errorCodes
-                    if (err.code === ETIMEDOUT) {
-                        clientResponseWrite(bridgedConnections[remoteID], TIMED_OUT + CLRF + CLRF);
-                    }
-                    else if (err.code === ENOTFOUND) {
-                        clientResponseWrite(bridgedConnections[remoteID], NOT_FOUND + CLRF + CLRF);
-                    }
-                    else {
-                        //log all unhandled errors
-                        logger.error(remoteID, err);
+                    switch(err.code) {
+                        case ETIMEDOUT:
+                            clientResponseWrite(bridgedConnections[remoteID], TIMED_OUT + CLRF + CLRF);
+                            break;
+                        case ENOTFOUND:
+                            clientResponseWrite(bridgedConnections[remoteID], NOT_FOUND + CLRF + CLRF);
+                            break;
+                        default:
+                            //log all unhandled errors
+                            logger.error(remoteID, err);
+                            clientResponseWrite(bridgedConnections[remoteID], NOT_OK + CLRF + CLRF);
                     }
                 }
                 resetSockets(remoteID, bridgedConnections);
@@ -120,6 +122,7 @@ class ProxyServer extends net.createServer {
                                         onDirectConnectionOpen(data);
                                     }
                                     else {
+                                        // response as normal http-proxy
                                         clientResponseWrite(bridgedConnections[remoteID], OK + CLRF + CLRF);
                                     }
                                 })
@@ -141,7 +144,6 @@ class ProxyServer extends net.createServer {
                     }
                 }
                 catch (err) {
-                    clientResponseWrite(bridgedConnections[remoteID], NOT_OK + CLRF + CLRF);
                     onClose(err);
                 }
             }
