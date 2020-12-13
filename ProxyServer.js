@@ -10,12 +10,16 @@ const getConnectionOptions = require('./lib/getConnectionOptions');
 const isFunction = require('./lib/isFunction');
 
 const {
-    BLANK, CLOSE, CLRF,
-    CONNECT, DATA, EMPTY, ERROR, EXIT,
-    HTTPS, HTTP_PORT, HTTPS_PORT,
-    NOT_OK, OK,
-    SEPARATOR, SLASH_REGEXP
+    EVENTS,
+    HTTP_METHODS, HTTP_RESPONSES, STRINGS,
+    ERROR_CODES
 } = require('./lib/constants');
+
+const {CLOSE, DATA, ERROR, EXIT} = EVENTS;
+const {ETIMEDOUT, ENOTFOUND} = ERROR_CODES;
+const {CONNECT, GET} = HTTP_METHODS;
+const {OK, NOT_OK, TIMED_OUT, NOT_FOUND} = HTTP_RESPONSES;
+const {BLANK, CLRF, SEPARATOR} = STRINGS;
 
 
 class ProxyServer extends net.createServer {
@@ -35,7 +39,17 @@ class ProxyServer extends net.createServer {
 
             function onClose(err) {
                 if (err && err instanceof Error) {
-                    logger.error(remoteID, err);
+                    //TODO handle more the errorCodes
+                    if (err.code === ETIMEDOUT) {
+                        clientResponseWrite(bridgedConnections[remoteID], TIMED_OUT + CLRF + CLRF);
+                    }
+                    else if (err.code === ENOTFOUND) {
+                        clientResponseWrite(bridgedConnections[remoteID], NOT_FOUND + CLRF + CLRF);
+                    }
+                    else {
+                        //log all unhandled errors
+                        logger.error(remoteID, err);
+                    }
                 }
                 resetSockets(remoteID, bridgedConnections);
             }
@@ -70,19 +84,22 @@ class ProxyServer extends net.createServer {
                                 bridgedConnection: bridgedConnections[remoteID],
                                 remoteID
                             });
-
                             const connectionOpt = getConnectionOptions(proxyToUse, upstreamHost);
-
-                            if (isFunction(tcpOutgoingAddress)) {
-                                connectionOpt.localAddress = tcpOutgoingAddress(data, bridgedConnections[remoteID], remoteID);
-                            }
 
                             //initializing socket and forwarding received request
                             bridgedConnections[remoteID].tunnel = {
                                 ADDRESS: connectionOpt.host,
                                 PORT: connectionOpt.port
                             };
-                            bridgedConnections[remoteID].client = new net.Socket();
+                            bridgedConnections[remoteID].client = new net.Socket()
+                                .on(DATA, onDataFromUpstream)
+                                .on(CLOSE, onClose)
+                                .on(ERROR, onClose);
+
+                            if (isFunction(tcpOutgoingAddress)) {
+                                connectionOpt.localAddress = tcpOutgoingAddress(data, bridgedConnections[remoteID], remoteID);
+                            }
+
                             bridgedConnections[remoteID].client
                                 .connect(connectionOpt, function onTunnelConnectionOpen(connectionError) {
                                     if (connectionError) {
@@ -96,14 +113,11 @@ class ProxyServer extends net.createServer {
                                         clientResponseWrite(bridgedConnections[remoteID], OK + CLRF + CLRF);
                                     }
                                 })
-                                .on(DATA, onDataFromUpstream)
-                                .on(CLOSE, onClose)
-                                .on(ERROR, onClose);
+
 
                         }
                         else if (firstHeaderRow.indexOf(CONNECT) === -1
                             && !bridgedConnections[remoteID].client) { // managing http
-                            let ADDRESS, PORT;
                             const upstreamHost = firstHeaderRow.split(BLANK)[1];
                             const proxyToUse = usingUpstreamToProxy(upstream, {
                                 data,
@@ -111,38 +125,24 @@ class ProxyServer extends net.createServer {
                                 remoteID
                             });
 
-                            if (!!proxyToUse) {
-                                ADDRESS = proxyToUse.split(SEPARATOR)[0]
-                                    .replace(SLASH_REGEXP, EMPTY);
-                                PORT = proxyToUse.split(SEPARATOR)[1];
-                            }
-                            else {
-                                ADDRESS = upstreamHost.split(SEPARATOR)[1]
-                                    .replace(SLASH_REGEXP, EMPTY);
+                            const connectionOpt = getConnectionOptions(proxyToUse, upstreamHost);
 
-                                PORT = upstreamHost.split(SEPARATOR)[2]
-                                || (~upstreamHost.split(SEPARATOR)[0].indexOf(HTTPS))
-                                    ? HTTPS_PORT : HTTP_PORT;
-                            }
-
-                            const connectionOpt = {
-                                port: PORT,
-                                host: ADDRESS,
-                                // localAddress: 'x.x.x.x' //THIS ONLY work if server-listener is not 0.0.0.0 but specific iFace/IP
+                            //initializing socket and forwarding received request
+                            bridgedConnections[remoteID].tunnel = {
+                                ADDRESS: connectionOpt.host,
+                                PORT: connectionOpt.port
                             };
+                            bridgedConnections[remoteID].client = new net.Socket()
+                                .on(DATA, onDataFromUpstream)
+                                .on(CLOSE, onClose)
+                                .on(ERROR, onClose);
 
                             if (isFunction(tcpOutgoingAddress)) {
                                 connectionOpt.localAddress = tcpOutgoingAddress(data, bridgedConnections[remoteID], remoteID);
                             }
 
-                            bridgedConnections[remoteID].tunnel = {ADDRESS, PORT};
-                            bridgedConnections[remoteID].client = new net.Socket();
                             bridgedConnections[remoteID].client
-                                .connect(connectionOpt, onDirectConnectionOpen)
-                                .on(DATA, onDataFromUpstream)
-                                .on(CLOSE, onClose)
-                                .on(ERROR, onClose);
-
+                                .connect(connectionOpt, onDirectConnectionOpen);
                         }
                         else if (bridgedConnections[remoteID] && bridgedConnections[remoteID].client) {
                             //ToDo injectData will not work on opened https-connection due to ssl (i.e. found a way to implement sslStrip or interception)

@@ -6,23 +6,24 @@ const ProxyServer = require('./ProxyServer');
 //init myLogger in verbose-Mode
 const logger = new Logger(true);
 //init ProxyServer
-const server = new ProxyServer();
+const server = new ProxyServer({verbose:false});
 
-const toTest = ['http://ifconfig.me', 'http://icanhazip.com', 'http://ifconfig.co'];
+const toTest = ['http://ifconfig.me', 'http://icanhazip.com', 'http://ifconfig.co','http://asdahke.e'];
 
 //starting server on port 10001
 server.listen(10001, '0.0.0.0', function () {
     logger.log('transparent-proxy was started!', server.address());
 
     const reqOpt = {
-        host: '0.0.0.0', port: 10001, method: 'GET',
+        host: '0.0.0.0', port: 10001,
+        method: 'GET',
         headers: {
             'User-Agent': 'curl/7.55.1'
         }
     };
 
     for (const singlePath of toTest) {
-        logger.log('sending request to', singlePath);
+        logger.log('sending HTTP request to', singlePath);
         const newReqOpt = JSON.parse(JSON.stringify(reqOpt));
         newReqOpt.path = singlePath;
 
@@ -43,5 +44,5 @@ server.listen(10001, '0.0.0.0', function () {
     setTimeout(function closeProxyServer() {
         logger.log('closing transparent-proxy Server');
         server.close();
-    }, 4000);
+    }, 10000);
 });
