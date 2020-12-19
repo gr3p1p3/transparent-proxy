@@ -2,11 +2,11 @@ const net = require('net');
 
 const Logger = require('./lib/Logger');
 
-const clientResponseWrite = require('./lib/clientRequestWrite');
-const clientRequestWrite = require('./lib/clientResponseWrite');
-const usingUpstreamToProxy = require('./lib/usingUpstreamToProxy');
-const resetSockets = require('./lib/resetSockets');
-const getConnectionOptions = require('./lib/getConnectionOptions');
+const clientResponseWrite = require('./core/clientRequestWrite');
+const clientRequestWrite = require('./core/clientResponseWrite');
+const usingUpstreamToProxy = require('./core/usingUpstreamToProxy');
+const resetSockets = require('./core/resetSockets');
+const getConnectionOptions = require('./core/getConnectionOptions');
 const isFunction = require('./lib/isFunction');
 
 const {

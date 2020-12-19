@@ -1,4 +1,4 @@
-const {STRINGS, SLASH_REGEXP, HTTP, HTTPS, HTTP_PORT, HTTPS_PORT} = require('./constants');
+const {STRINGS, SLASH_REGEXP, HTTP, HTTPS, HTTP_PORT, HTTPS_PORT} = require('../lib/constants');
 
 function getAddressAndPortFromString(ipStringWithPort) {
     let [protocol, address, port] = ipStringWithPort.split(STRINGS.SEPARATOR);

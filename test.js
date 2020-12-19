@@ -44,5 +44,5 @@ server.listen(10001, '0.0.0.0', function () {
     setTimeout(function closeProxyServer() {
         logger.log('closing transparent-proxy Server');
         server.close();
-    }, 10000);
+    }, 5000);
 });

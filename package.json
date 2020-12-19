@@ -4,7 +4,7 @@
   "description": "Transparent HTTP-Proxy-Server. Upstream your requests whatever you want",
   "main": "ProxyServer.js",
   "scripts": {
-    "test": "echo \" Starting Node transparent-proxy on port 8080 for 10 seconds\" && node test.js && exit 0"
+    "test": "echo \" Starting Node transparent-proxy on port 8080 for 5 seconds\" && node test.js && exit 0"
   },
   "keywords": [
     "proxy",
