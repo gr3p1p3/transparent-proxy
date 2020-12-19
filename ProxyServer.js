@@ -23,8 +23,12 @@ const {BLANK, CLRF, EMPTY, SEPARATOR, PROXY_AUTH} = STRINGS;
 
 class ProxyServer extends net.createServer {
     constructor(options) {
-        const {upstream, tcpOutgoingAddress, verbose, injectData, injectResponse, auth}
-            = options || DEFAULT_OPTIONS; //using default options //TODO merge these together instead
+        const {
+            upstream, tcpOutgoingAddress,
+            verbose,
+            injectData, injectResponse,
+            auth
+        } = {...DEFAULT_OPTIONS, ...options}; //merging with default options
         const logger = new Logger(verbose);
 
         const bridgedConnections = {};
@@ -96,19 +100,20 @@ class ProxyServer extends net.createServer {
                 return connectionOpt;
             }
 
-
             function handleProxyTunnel(split, data) {
                 const firstHeaderRow = split[0];
+                const thisTunnel = bridgedConnections[remoteID];
+
                 if (~firstHeaderRow.indexOf(CONNECT)) { //managing HTTP-Tunnel & HTTPs
                     const connectionOpt = prepareTunnel(data, firstHeaderRow);
-                    bridgedConnections[remoteID].client
+                    thisTunnel.client
                         .connect(connectionOpt, function onTunnelConnectionOpen(connectionError) {
                             if (connectionError) {
                                 return onClose(connectionError);
                             }
                             const proxyToUse = usingUpstreamToProxy(upstream, {
                                 data,
-                                bridgedConnection: bridgedConnections[remoteID],
+                                bridgedConnection: thisTunnel,
                                 remoteID
                             });
 
@@ -117,16 +122,16 @@ class ProxyServer extends net.createServer {
                             }
                             else {
                                 // response as normal http-proxy
-                                clientResponseWrite(bridgedConnections[remoteID], OK + CLRF + CLRF);
+                                clientResponseWrite(thisTunnel, OK + CLRF + CLRF);
                             }
                         })
                 }
                 else if (firstHeaderRow.indexOf(CONNECT) === -1
-                    && !bridgedConnections[remoteID].client) { // managing http
+                    && !thisTunnel.client) { // managing http
 
                     const connectionOpt = prepareTunnel(data, firstHeaderRow);
 
-                    bridgedConnections[remoteID].client
+                    thisTunnel.client
                         .connect(connectionOpt, function onTunnelConnectionOpen(connectionError) {
                             if (connectionError) {
                                 return onClose(connectionError);
@@ -135,23 +140,24 @@ class ProxyServer extends net.createServer {
                         });
 
                 }
-                else if (bridgedConnections[remoteID] && bridgedConnections[remoteID].client) {
+                else if (thisTunnel && thisTunnel.client) {
                     //ToDo injectData will not work on opened https-connection due to ssl (i.e. found a way to implement sslStrip or interception)
                     // onDirectConnectionOpen(data);
-                    clientRequestWrite(bridgedConnections[remoteID], data);
+                    clientRequestWrite(thisTunnel, data);
                 }
-                logger.log(remoteID, '=>', bridgedConnections[remoteID].tunnel);
+                logger.log(remoteID, '=>', thisTunnel.tunnel);
             }
 
             function onDataFromClient(data) {
                 const dataString = data.toString();
+                const thisTunnel = bridgedConnections[remoteID];
 
                 try {
                     if (dataString && dataString.length > 0) {
                         const split = dataString.split(CLRF); //TODO make secure
 
                         if (isFunction(auth)
-                            && !bridgedConnections[remoteID].authenticated) {
+                            && !thisTunnel.authenticated) {
                             const proxyAuth = split[4]; //TODO could be on other index too depending on clientReq
                             if (proxyAuth.indexOf(PROXY_AUTH) === 0) {
                                 const credentials = proxyAuth
@@ -160,21 +166,21 @@ class ProxyServer extends net.createServer {
 
                                 const parsedCredentials = Buffer.from(credentials, 'base64').toString(); //converting from base64
                                 const [username, password] = parsedCredentials.split(SEPARATOR); //TODO split at : is not sure enough
-                                const isLogged = auth(username, password, bridgedConnections[remoteID]);
+                                const isLogged = auth(username, password, thisTunnel);
 
                                 if (isLogged) {
-                                    bridgedConnections[remoteID].authenticated = true;
-                                    bridgedConnections[remoteID].user = username;
+                                    thisTunnel.authenticated = true;
+                                    thisTunnel.user = username;
                                     handleProxyTunnel(split, data);
                                 }
                                 else {
-                                    //return auth-error
-                                    clientResponseWrite(bridgedConnections[remoteID], AUTH_REQUIRED + CLRF + CLRF);
+                                    //return auth-error and close all
+                                    clientResponseWrite(thisTunnel, AUTH_REQUIRED + CLRF + CLRF);
                                     onClose();
                                 }
                             }
                             else {
-                                clientResponseWrite(bridgedConnections[remoteID], AUTH_REQUIRED + CLRF + CLRF);
+                                clientResponseWrite(thisTunnel, AUTH_REQUIRED + CLRF + CLRF);
                             }
                         }
                         else {
