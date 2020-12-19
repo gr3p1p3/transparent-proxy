@@ -1,13 +1,12 @@
 const net = require('net');
 
-const Logger = require('./lib/Logger');
-
 const clientResponseWrite = require('./core/clientRequestWrite');
 const clientRequestWrite = require('./core/clientResponseWrite');
-const usingUpstreamToProxy = require('./core/usingUpstreamToProxy');
 const resetSockets = require('./core/resetSockets');
 const getConnectionOptions = require('./core/getConnectionOptions');
 const isFunction = require('./lib/isFunction');
+const usingUpstreamToProxy = require('./lib/usingUpstreamToProxy');
+const Logger = require('./lib/Logger');
 
 const {
     DEFAULT_OPTIONS, EVENTS,
