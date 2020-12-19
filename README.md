@@ -1,10 +1,14 @@
 # Intro
 
-**transparent-proxy** extends the native [net.createServer](https://nodejs.org/api/net.html#net_net_createserver_options_connectionlistener) and it acts as a http-proxy.
-
+**transparent-proxy** extends the native [net.createServer](https://nodejs.org/api/net.html#net_net_createserver_options_connectionlistener) and it acts as a **real** transparent http-proxy.
 
 This module was built on top of TCP-level to avoid header-stripping problem of nodejs http(s)-modules. 
 
+It allows to upstream client-request dynamically to other proxies, or to certain iFace, and more...
+supporting Proxy-Authentication.
+
+
+*Note:* It only supports Basic authentication!
  
 # Quick Start
 
@@ -36,23 +40,7 @@ server.listen(8080, '0.0.0.0', function () {
 |[options.verbose] | <code>Boolean</code> |  Activate verbose mode |
 |[options.upstream] | <code>Function</code> |  The proxy to be used to upstreaming requests. |
 |[options.tcpOutgoingAddress] | <code>Function</code> |  The localAddress to use while sending requests |
-
-## getBridgedConnections()
-
-```javascript
-const ProxyServer = require('transparent-proxy');
-const server = new ProxyServer();
-
-//starting server on port 8080
-server.listen(8080, '0.0.0.0', function () {
-    console.log('Proxy-Server started!', server.address());
-});
-
-setInterval(function showOpenSockets() {
-    const bridgedConnections = server.getBridgedConnections();
-    console.log([new Date()], 'OPEN =>', Object.keys(bridgedConnections).length)
-}, 2000);
-```
+|[options.auth] | <code>Function</code> |  Activate Proxy-Authentication. |
 
 ## `upstream` & `tcpOutgoingAddress` Options
 
@@ -61,7 +49,7 @@ The options are functions having follow parameters:
 | Param  | Type                | Description  |
 | ------ | ------------------- | ------------ |
 |data | <code>Buffer</code> |  The received data. |
-|bridgedConnection | <code>Socket</code> |  The socket instance |
+|bridgedConnection | <code>Object</code> |  Object containing info/data about Tunnel |
 |bridgedConnectionId | <code>String</code> |  The id of connection `IP:PORT`. |
 
 - upstream-Function need to return a String with format -> IP:PORT of used http-proxy. If 'localhost' is returned, then the host-self will be used as proxy.
@@ -69,7 +57,7 @@ The options are functions having follow parameters:
 
 These functions will be executed before first tcp-socket-connection is established.
 
-## Upstream to other proxy
+## Upstream to other proxies
 
 If you don't want to use the host of active instance self, then you need to upstream connections to another http-proxy.
 This can be done with `upstream` attribute.
@@ -87,6 +75,55 @@ const server = new ProxyServer({
 server.listen(8080, '0.0.0.0', function () {
     console.log('TCP-Proxy-Server started!', server.address());
 });
+```
+
+
+## `auth` option
+
+This activate basic authorization mechanism.
+The auth-function will be emit while handling Proxy-Authentications.
+
+ 
+| Param  | Type                | Description  |
+| ------ | ------------------- | ------------ |
+|username | <code>String</code> |  The client username. |
+|password | <code>String</code> |  The client password |
+
+
+*Note*: It **must** return true or false.
+
+```javascript
+const ProxyServer = require('transparent-proxy');
+
+const server = new ProxyServer({
+    auth: function (username, password) {
+        return username === 'bar' && password === 'foo';
+    }
+});
+
+//starting server on port 8080
+server.listen(8080, '0.0.0.0', function () {
+    console.log('TCP-Proxy-Server started!', server.address());
+});
+```
+
+
+
+## .getBridgedConnections()
+
+```javascript
+const ProxyServer = require('transparent-proxy');
+const server = new ProxyServer();
+
+//starting server on port 8080
+server.listen(8080, '0.0.0.0', function () {
+    console.log('Proxy-Server started!', server.address());
+});
+
+setInterval(function showOpenSockets() {
+    const bridgedConnections = server.getBridgedConnections();
+    console.log([new Date()], 'OPEN =>', Object.keys(bridgedConnections).length)
+}, 2000);
 ```
 
 ## Examples
