@@ -18,6 +18,7 @@ supporting Proxy-Authentication.
 npm i transparent-proxy
 ```
 
+
 ## Use
 
 ```javascript
@@ -32,6 +33,8 @@ server.listen(8080, '0.0.0.0', function () {
 });
 ```
 
+
+
 ## Options Object
 
 | Param  | Type                | Description  |
@@ -41,6 +44,8 @@ server.listen(8080, '0.0.0.0', function () {
 |[options.upstream] | <code>Function</code> |  The proxy to be used to upstreaming requests. |
 |[options.tcpOutgoingAddress] | <code>Function</code> |  The localAddress to use while sending requests |
 |[options.auth] | <code>Function</code> |  Activate Proxy-Authentication. |
+
+
 
 ## `upstream` & `tcpOutgoingAddress` Options
 
@@ -56,6 +61,7 @@ The options are functions having follow parameters:
 - tcpOutgoingAddress-Function need to return a String with format -> IP. 
 
 These functions will be executed before first tcp-socket-connection is established.
+
 
 ## Upstream to other proxies
 
@@ -76,6 +82,7 @@ server.listen(8080, '0.0.0.0', function () {
     console.log('TCP-Proxy-Server started!', server.address());
 });
 ```
+
 
 
 ## `auth` option
