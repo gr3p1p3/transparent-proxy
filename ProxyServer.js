@@ -170,6 +170,7 @@ class ProxyServer extends net.createServer {
                                 else {
                                     //return auth-error
                                     clientResponseWrite(bridgedConnections[remoteID], AUTH_REQUIRED + CLRF + CLRF);
+                                    onClose();
                                 }
                             }
                             else {
