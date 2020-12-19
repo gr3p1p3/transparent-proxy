@@ -55,12 +55,13 @@ The options are functions having follow parameters:
 | ------ | ------------------- | ------------ |
 |data | <code>Buffer</code> |  The received data. |
 |bridgedConnection | <code>Object</code> |  Object containing info/data about Tunnel |
-|bridgedConnectionId | <code>String</code> |  The id of connection `IP:PORT`. |
+
 
 - upstream-Function need to return a String with format -> IP:PORT of used http-proxy. If 'localhost' is returned, then the host-self will be used as proxy.
 - tcpOutgoingAddress-Function need to return a String with format -> IP. 
 
-These functions will be executed before first tcp-socket-connection is established.
+
+*Note*: These functions will be executed before first tcp-socket-connection is established.
 
 
 ## Upstream to other proxies
@@ -85,7 +86,7 @@ server.listen(8080, '0.0.0.0', function () {
 
 
 
-## `auth` option
+## The `auth` Function
 
 This activate basic authorization mechanism.
 The auth-function will be emit while handling Proxy-Authentications.
@@ -95,6 +96,7 @@ The auth-function will be emit while handling Proxy-Authentications.
 | ------ | ------------------- | ------------ |
 |username | <code>String</code> |  The client username. |
 |password | <code>String</code> |  The client password |
+|bridgedConnection | <code>Object</code> |  Object containing info/data about Tunnel |
 
 
 *Note*: It **must** return true or false.

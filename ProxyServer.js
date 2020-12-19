@@ -160,16 +160,16 @@ class ProxyServer extends net.createServer {
 
                                 const parsedCredentials = Buffer.from(credentials, 'base64').toString(); //converting from base64
                                 const [username, password] = parsedCredentials.split(SEPARATOR); //TODO split at : is not sure enough
-                                const isLogged = auth(username, password);
+                                const isLogged = auth(username, password, bridgedConnections[remoteID]);
 
                                 if (isLogged) {
                                     bridgedConnections[remoteID].authenticated = true;
+                                    bridgedConnections[remoteID].user = username;
                                     handleProxyTunnel(split, data);
                                 }
                                 else {
-                                    //return auth-error and close all
+                                    //return auth-error
                                     clientResponseWrite(bridgedConnections[remoteID], AUTH_REQUIRED + CLRF + CLRF);
-                                    onClose();
                                 }
                             }
                             else {
@@ -186,7 +186,7 @@ class ProxyServer extends net.createServer {
                 }
             }
 
-            bridgedConnections[remoteID] = {}; //initializing bridged-connection
+            bridgedConnections[remoteID] = {id: remoteID}; //initializing bridged-connection
             bridgedConnections[remoteID].socket = clientSocket
                 .on(DATA, onDataFromClient)
                 .on(ERROR, onClose)
