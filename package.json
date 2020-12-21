@@ -1,6 +1,6 @@
 {
   "name": "transparent-proxy",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "Transparent HTTP-Proxy-Server. Upstream your requests whatever you want",
   "main": "ProxyServer.js",
   "scripts": {

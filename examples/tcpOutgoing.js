@@ -2,7 +2,7 @@ const ProxyServer = require('../ProxyServer');
 
 //init ProxyServer
 const server = new ProxyServer({
-    tcpOutgoingAddress: function (data, bridgedConnection, bridgedConnectionId) {
+    tcpOutgoingAddress: function (data, bridgedConnection) {
         return 'x.x.x.x'; //using other iFace as default
     }
 });

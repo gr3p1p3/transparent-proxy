@@ -64,6 +64,7 @@ The options are functions having follow parameters:
 *Note*: These functions will be executed before first tcp-socket-connection is established.
 
 
+
 ## Upstream to other proxies
 
 If you don't want to use the host of active instance self, then you need to upstream connections to another http-proxy.
@@ -89,7 +90,7 @@ server.listen(8080, '0.0.0.0', function () {
 ## The `auth` Function
 
 This activate basic authorization mechanism.
-The auth-function will be emit while handling Proxy-Authentications.
+The Auth-function will be executed while handling Proxy-Authentications.
 
  
 | Param  | Type                | Description  |
@@ -99,7 +100,8 @@ The auth-function will be emit while handling Proxy-Authentications.
 |bridgedConnection | <code>Object</code> |  Object containing info/data about Tunnel |
 
 
-*Note*: It **must** return true or false.
+*Note*: It needs to return true or false (isAuthenticated).
+
 
 ```javascript
 const ProxyServer = require('transparent-proxy');
@@ -115,6 +117,7 @@ server.listen(8080, '0.0.0.0', function () {
     console.log('TCP-Proxy-Server started!', server.address());
 });
 ```
+
 
 
 
@@ -143,7 +146,7 @@ This example upstreams only requests for ifconfig.me to another proxy, for all o
 const ProxyServer = require('transparent-proxy');
 
 const server = new ProxyServer({
-    upstream: function (data, bridgedConnection, bridgedConnectionId) {
+    upstream: function (data, bridgedConnection) {
         if (~(data.toString().indexOf('ifconfig.me'))) {
             return 'x.x.x.x:3128'; // upstream to other proxy
         } else {

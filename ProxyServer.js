@@ -4,6 +4,7 @@ const clientResponseWrite = require('./core/clientRequestWrite');
 const clientRequestWrite = require('./core/clientResponseWrite');
 const resetSockets = require('./core/resetSockets');
 const getConnectionOptions = require('./core/getConnectionOptions');
+const parseHeaders = require('./lib/parseHeaders');
 const isFunction = require('./lib/isFunction');
 const usingUpstreamToProxy = require('./lib/usingUpstreamToProxy');
 const Logger = require('./lib/Logger');
@@ -18,7 +19,7 @@ const {CLOSE, DATA, ERROR, EXIT} = EVENTS;
 const {ETIMEDOUT, ENOTFOUND} = ERROR_CODES;
 const {CONNECT, GET} = HTTP_METHODS;
 const {AUTH_REQUIRED, OK, NOT_OK, TIMED_OUT, NOT_FOUND} = HTTP_RESPONSES;
-const {BLANK, CLRF, EMPTY, SEPARATOR, PROXY_AUTH} = STRINGS;
+const {BLANK, CLRF, EMPTY, SEPARATOR, PROXY_AUTH, PROXY_AUTH_BASIC} = STRINGS;
 
 class ProxyServer extends net.createServer {
     constructor(options) {
@@ -112,8 +113,7 @@ class ProxyServer extends net.createServer {
                             }
                             const proxyToUse = usingUpstreamToProxy(upstream, {
                                 data,
-                                bridgedConnection: thisTunnel,
-                                remoteID
+                                bridgedConnection: thisTunnel
                             });
 
                             if (!!proxyToUse) {
@@ -153,15 +153,15 @@ class ProxyServer extends net.createServer {
 
                 try {
                     if (dataString && dataString.length > 0) {
+                        const headers = parseHeaders(data);
                         const split = dataString.split(CLRF); //TODO make secure
 
                         if (isFunction(auth)
                             && !thisTunnel.authenticated) {
-                            const proxyAuth = split[4]; //TODO could be on other index too depending on clientReq
-                            if (proxyAuth.indexOf(PROXY_AUTH) === 0) {
+                            const proxyAuth = headers[PROXY_AUTH.toLowerCase()];
+                            if (proxyAuth) {
                                 const credentials = proxyAuth
-                                    .replace(PROXY_AUTH, EMPTY)
-                                    .replace(CLRF, EMPTY);
+                                    .replace(PROXY_AUTH_BASIC, EMPTY);
 
                                 const parsedCredentials = Buffer.from(credentials, 'base64').toString(); //converting from base64
                                 const [username, password] = parsedCredentials.split(SEPARATOR); //TODO split at : is not sure enough
