@@ -127,7 +127,6 @@ class ProxyServer extends net.createServer {
                 }
                 else if (firstHeaderRow.indexOf(CONNECT) === -1
                     && !thisTunnel.client) { // managing http
-
                     const connectionOpt = prepareTunnel(data, firstHeaderRow);
 
                     thisTunnel.client
@@ -147,7 +146,7 @@ class ProxyServer extends net.createServer {
                 logger.log(remoteID, '=>', thisTunnel.tunnel);
             }
 
-            function onDataFromClient(data) {
+            async function onDataFromClient(data) {
                 const dataString = data.toString();
                 const thisTunnel = bridgedConnections[remoteID];
 
@@ -165,7 +164,11 @@ class ProxyServer extends net.createServer {
 
                                 const parsedCredentials = Buffer.from(credentials, 'base64').toString(); //converting from base64
                                 const [username, password] = parsedCredentials.split(SEPARATOR); //TODO split at : is not sure enough
-                                const isLogged = auth(username, password, thisTunnel);
+                                let isLogged = auth(username, password, thisTunnel);
+
+                                if(isLogged instanceof Promise) {
+                                    isLogged = await isLogged;
+                                }
 
                                 if (isLogged) {
                                     thisTunnel.authenticated = true;

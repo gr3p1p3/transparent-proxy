@@ -5,11 +5,10 @@
 This module was built on top of TCP-level to avoid header-stripping problem of nodejs http(s)-modules. 
 
 It allows to upstream client-request dynamically to other proxies, or to certain iFace, and more...
-supporting Proxy-Authentication.
+
+It supports Basic Proxy-Authentication.
 
 
-*Note:* It only supports Basic authentication!
- 
 # Quick Start
 
 ## Install
@@ -92,6 +91,7 @@ server.listen(8080, '0.0.0.0', function () {
 This activate basic authorization mechanism.
 The Auth-function will be executed while handling Proxy-Authentications.
 
+
  
 | Param  | Type                | Description  |
 | ------ | ------------------- | ------------ |
@@ -100,7 +100,8 @@ The Auth-function will be executed while handling Proxy-Authentications.
 |bridgedConnection | <code>Object</code> |  Object containing info/data about Tunnel |
 
 
-*Note*: It needs to return true or false (isAuthenticated).
+
+*Note*: It needs to return True/False or a **Promise** that resolves to boolean (*isAuthenticated*).
 
 
 ```javascript
@@ -120,7 +121,6 @@ server.listen(8080, '0.0.0.0', function () {
 
 
 
-
 ## .getBridgedConnections()
 
 ```javascript
@@ -137,6 +137,7 @@ setInterval(function showOpenSockets() {
     console.log([new Date()], 'OPEN =>', Object.keys(bridgedConnections).length)
 }, 2000);
 ```
+
 
 ## Examples
 
@@ -171,4 +172,3 @@ x.x.x.x
 curl -x 127.0.0.1:8080 https://ifconfig.co
 y.y.y.y
 ```
-

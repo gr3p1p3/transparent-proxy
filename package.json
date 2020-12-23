@@ -1,7 +1,7 @@
 {
   "name": "transparent-proxy",
-  "version": "1.4.4",
-  "description": "Transparent HTTP-Proxy-Server. Upstream your requests whatever you want",
+  "version": "1.4.5",
+  "description": "Real transparent HTTP-Proxy-Server. Upstream your requests whatever you want!",
   "main": "ProxyServer.js",
   "scripts": {
     "test": "echo \" Starting Node transparent-proxy on port 8080 for 5 seconds\" && node test.js && exit 0",
@@ -13,7 +13,8 @@
     "proxy-authentication",
     "transparent",
     "upstream",
-    "super proxy"
+    "server",
+    "squid"
   ],
   "author": "gr3p",
   "license": "ISC",
