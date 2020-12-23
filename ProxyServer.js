@@ -11,8 +11,8 @@ const Logger = require('./lib/Logger');
 
 const {
     DEFAULT_OPTIONS, EVENTS,
-    HTTP_METHODS, HTTP_RESPONSES, STRINGS,
-    ERROR_CODES
+    HTTP_BODIES, HTTP_METHODS, HTTP_RESPONSES,
+    STRINGS, ERROR_CODES
 } = require('./lib/constants');
 
 const {CLOSE, DATA, ERROR, EXIT} = EVENTS;
@@ -48,7 +48,7 @@ class ProxyServer extends net.createServer {
                             clientResponseWrite(bridgedConnections[remoteID], TIMED_OUT + CLRF + CLRF);
                             break;
                         case ENOTFOUND:
-                            clientResponseWrite(bridgedConnections[remoteID], NOT_FOUND + CLRF + CLRF);
+                            clientResponseWrite(bridgedConnections[remoteID], NOT_FOUND + CLRF + CLRF + HTTP_BODIES.NOT_FOUND);
                             break;
                         default:
                             //log all unhandled errors
@@ -165,7 +165,7 @@ class ProxyServer extends net.createServer {
                                 const [username, password] = parsedCredentials.split(SEPARATOR); //TODO split at : is not sure enough
                                 let isLogged = auth(username, password, thisTunnel);
 
-                                if(isLogged instanceof Promise) {
+                                if (isLogged instanceof Promise) {
                                     isLogged = await isLogged;
                                 }
 
@@ -176,7 +176,7 @@ class ProxyServer extends net.createServer {
                                 }
                                 else {
                                     //return auth-error and close all
-                                    clientResponseWrite(thisTunnel, AUTH_REQUIRED + CLRF + CLRF);
+                                    clientResponseWrite(thisTunnel, AUTH_REQUIRED + CLRF + CLRF + HTTP_BODIES.AUTH_REQUIRED);
                                     onClose();
                                 }
                             }

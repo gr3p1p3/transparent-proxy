@@ -172,3 +172,7 @@ x.x.x.x
 curl -x 127.0.0.1:8080 https://ifconfig.co
 y.y.y.y
 ```
+
+
+
+For more examples [look here](https://github.com/gr3p1p3/transparent-proxy/tree/master/examples).
