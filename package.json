@@ -1,6 +1,6 @@
 {
   "name": "transparent-proxy",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Real transparent HTTP-Proxy-Server. Upstream your requests whatever you want!",
   "main": "ProxyServer.js",
   "scripts": {
@@ -9,12 +9,14 @@
   },
   "keywords": [
     "proxy",
+    "tunnel",
     "http-proxy",
     "proxy-authentication",
     "transparent",
     "upstream",
     "server",
-    "squid"
+    "squid",
+    "tcp"
   ],
   "author": "gr3p",
   "license": "ISC",

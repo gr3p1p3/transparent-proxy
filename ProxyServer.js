@@ -77,8 +77,7 @@ class ProxyServer extends net.createServer {
                 const upstreamHost = firstHeaderRow.split(BLANK)[1];
                 const proxyToUse = usingUpstreamToProxy(upstream, {
                     data,
-                    bridgedConnection: bridgedConnections[remoteID],
-                    remoteID
+                    bridgedConnection: bridgedConnections[remoteID]
                 });
                 const connectionOpt = getConnectionOptions(proxyToUse, upstreamHost);
 
@@ -93,6 +92,7 @@ class ProxyServer extends net.createServer {
                     .on(ERROR, onClose);
 
                 if (isFunction(tcpOutgoingAddress)) {
+                    //THIS ONLY work if server-listener is not 0.0.0.0 but specific iFace/IP
                     connectionOpt.localAddress = tcpOutgoingAddress(data, bridgedConnections[remoteID]);
                 }
 

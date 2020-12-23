@@ -29,21 +29,14 @@ function getAddressAndPortFromString(ipStringWithPort) {
  * @returns {{port: number, host: string}}
  */
 module.exports = function getConnectionOptions(proxyToUse, upstreamHost) {
-    let ADDRESS, PORT;
-    if (!!proxyToUse) {
-        const connOpt = getAddressAndPortFromString(proxyToUse);
-        ADDRESS = connOpt.address;
-        PORT = connOpt.port;
-    }
-    else {
-        const connOpt = getAddressAndPortFromString(upstreamHost);
-        ADDRESS = connOpt.address;
-        PORT = connOpt.port;
-    }
+    const upstreamToUse = (!!proxyToUse)
+        ? proxyToUse
+        : upstreamHost;
+    const connOpt = getAddressAndPortFromString(upstreamToUse);
 
     return {
-        port: parseInt(PORT),
-        host: ADDRESS,
-        // localAddress: 'x.x.x.x' //THIS ONLY work if server-listener is not 0.0.0.0 but specific iFace/IP
+        port: parseInt(connOpt.port),
+        host: connOpt.address,
+        protocol: connOpt.protocol
     };
 };
