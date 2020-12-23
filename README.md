@@ -6,7 +6,7 @@ This module was built on top of TCP-level to avoid header-stripping problem of n
 
 It allows to upstream client-request dynamically to other proxies, or to certain iFace, and more...
 
-It supports Basic Proxy-Authentication.
+It supports [Basic Proxy-Authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authorization).
 
 
 # Quick Start
@@ -39,10 +39,10 @@ server.listen(8080, '0.0.0.0', function () {
 | Param  | Type                | Description  |
 | ------ | ------------------- | ------------ |
 |options | <code>Object</code> |  The options object. |
-|[options.verbose] | <code>Boolean</code> |  Activate verbose mode |
-|[options.upstream] | <code>Function</code> |  The proxy to be used to upstreaming requests. |
-|[options.tcpOutgoingAddress] | <code>Function</code> |  The localAddress to use while sending requests |
-|[options.auth] | <code>Function</code> |  Activate Proxy-Authentication. |
+|[options.auth] | <code>Function</code> |  Activate/Handle Proxy-Authentication. Returns or solves to Boolean. |
+|[options.upstream] | <code>Function</code> |  The proxy to be used to upstreaming requests. Returns String. |
+|[options.tcpOutgoingAddress] | <code>Function</code> |  The localAddress to use while sending requests. Returns String |
+|[options.verbose] | <code>Boolean</code> |  Activate verbose mode. |
 
 
 
