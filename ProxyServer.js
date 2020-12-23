@@ -61,16 +61,15 @@ class ProxyServer extends net.createServer {
 
             function onDataFromUpstream(dataFromUpStream) {
                 const responseData = isFunction(injectResponse)
-                    ? injectResponse(dataFromUpStream, bridgedConnections[remoteID], remoteID)
+                    ? injectResponse(dataFromUpStream, bridgedConnections[remoteID])
                     : dataFromUpStream;
                 clientResponseWrite(bridgedConnections[remoteID], responseData)
             }
 
             function onDirectConnectionOpen(srcData) {
                 const requestData = isFunction(injectData)
-                    ? injectData(srcData, bridgedConnections[remoteID], remoteID)
+                    ? injectData(srcData, bridgedConnections[remoteID])
                     : srcData;
-
                 clientRequestWrite(bridgedConnections[remoteID], requestData);
             }
 
@@ -94,7 +93,7 @@ class ProxyServer extends net.createServer {
                     .on(ERROR, onClose);
 
                 if (isFunction(tcpOutgoingAddress)) {
-                    connectionOpt.localAddress = tcpOutgoingAddress(data, bridgedConnections[remoteID], remoteID);
+                    connectionOpt.localAddress = tcpOutgoingAddress(data, bridgedConnections[remoteID]);
                 }
 
                 return connectionOpt;
