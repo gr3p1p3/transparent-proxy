@@ -56,7 +56,7 @@ class ProxyServer extends net.createServer {
                             clientResponseWrite(bridgedConnections[remoteID], NOT_OK + CLRF + CLRF);
                     }
                 }
-                resetSockets(remoteID, bridgedConnections);
+                return resetSockets(remoteID, bridgedConnections);
             }
 
             function onDataFromUpstream(dataFromUpStream) {
@@ -110,17 +110,12 @@ class ProxyServer extends net.createServer {
                             if (connectionError) {
                                 return onClose(connectionError);
                             }
-                            const proxyToUse = usingUpstreamToProxy(upstream, {
-                                data,
-                                bridgedConnection: thisTunnel
-                            });
-
-                            if (!!proxyToUse) {
-                                onDirectConnectionOpen(data);
+                            if (connectionOpt.upstreamed) {
+                                return onDirectConnectionOpen(data);
                             }
                             else {
                                 // response as normal http-proxy
-                                clientResponseWrite(thisTunnel, OK + CLRF + CLRF);
+                                return clientResponseWrite(thisTunnel, OK + CLRF + CLRF);
                             }
                         })
                 }
@@ -133,7 +128,7 @@ class ProxyServer extends net.createServer {
                             if (connectionError) {
                                 return onClose(connectionError);
                             }
-                            onDirectConnectionOpen(data);
+                            return onDirectConnectionOpen(data);
                         });
 
                 }
@@ -172,25 +167,25 @@ class ProxyServer extends net.createServer {
                                 if (isLogged) {
                                     thisTunnel.authenticated = true;
                                     thisTunnel.user = username;
-                                    handleProxyTunnel(split, data);
+                                    return handleProxyTunnel(split, data);
                                 }
                                 else {
                                     //return auth-error and close all
                                     clientResponseWrite(thisTunnel, AUTH_REQUIRED + CLRF + CLRF + HTTP_BODIES.AUTH_REQUIRED);
-                                    onClose();
+                                    return onClose();
                                 }
                             }
                             else {
-                                clientResponseWrite(thisTunnel, AUTH_REQUIRED + CLRF + CLRF);
+                                return clientResponseWrite(thisTunnel, AUTH_REQUIRED + CLRF + CLRF);
                             }
                         }
                         else {
-                            handleProxyTunnel(split, data);
+                            return handleProxyTunnel(split, data);
                         }
                     }
                 }
                 catch (err) {
-                    onClose(err);
+                    return onClose(err);
                 }
             }
 
