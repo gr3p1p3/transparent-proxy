@@ -6,9 +6,9 @@ const ProxyServer = require('./ProxyServer');
 //init myLogger in verbose-Mode
 const logger = new Logger(true);
 //init ProxyServer
-const server = new ProxyServer({verbose:false});
+const server = new ProxyServer({verbose: true});
 
-const toTest = ['http://ifconfig.me', 'http://icanhazip.com', 'http://ifconfig.co','http://asdahke.e'];
+const toTest = ['http://ifconfig.me', 'http://icanhazip.com', 'http://ifconfig.co', 'http://asdahke.e'];
 
 //starting server on port 10001
 server.listen(10001, '0.0.0.0', function () {
@@ -23,21 +23,20 @@ server.listen(10001, '0.0.0.0', function () {
     };
 
     for (const singlePath of toTest) {
-        logger.log('sending HTTP request to', singlePath);
+        logger.log('sending HTTP request to =>', singlePath);
         const newReqOpt = JSON.parse(JSON.stringify(reqOpt));
         newReqOpt.path = singlePath;
 
         http.request(newReqOpt, function (response) {
             let responseMsg = '';
 
-            logger.log('for', singlePath, 'received response', response.statusCode);
             response.on('data', function (data) {
                 responseMsg += data.toString();
-                logger.log('for', singlePath, 'received responseData', responseMsg);
+                logger.log('for', singlePath, 'received responseData => status:', response.statusCode, '=>', responseMsg);
             });
         })
             .on('error', function (err) {
-                logger.error('for', singlePath, 'error', err);
+                logger.error('for', singlePath, 'error =>', err);
             }).end();
     }
 
