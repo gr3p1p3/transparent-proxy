@@ -85,7 +85,6 @@ server.listen(8080, '0.0.0.0', function () {
 ```
 
 
-
 ## The `auth` Function
 
 This activate basic authorization mechanism.

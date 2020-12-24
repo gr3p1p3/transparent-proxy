@@ -5,6 +5,7 @@ const clientRequestWrite = require('./core/clientResponseWrite');
 const resetSockets = require('./core/resetSockets');
 const getConnectionOptions = require('./core/getConnectionOptions');
 const parseHeaders = require('./lib/parseHeaders');
+const rebuildHeaders = require('./lib/rebuildHeaders');
 const isFunction = require('./lib/isFunction');
 const usingUpstreamToProxy = require('./lib/usingUpstreamToProxy');
 const Logger = require('./lib/Logger');
@@ -56,7 +57,7 @@ class ProxyServer extends net.createServer {
                             clientResponseWrite(bridgedConnections[remoteID], NOT_OK + CLRF + CLRF);
                     }
                 }
-                return resetSockets(remoteID, bridgedConnections);
+                resetSockets(remoteID, bridgedConnections);
             }
 
             function onDataFromUpstream(dataFromUpStream) {
@@ -111,11 +112,20 @@ class ProxyServer extends net.createServer {
                                 return onClose(connectionError);
                             }
                             if (connectionOpt.upstreamed) {
-                                return onDirectConnectionOpen(data);
+                                if (connectionOpt.credentials) {
+                                    const headers = parseHeaders(data);
+                                    const basedCredentials = Buffer.from(connectionOpt.credentials).toString('base64'); //converting to base64
+                                    headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
+                                    const newData = rebuildHeaders(headers, data);
+                                    clientRequestWrite(thisTunnel, newData)
+                                }
+                                else {
+                                    onDirectConnectionOpen(data);
+                                }
                             }
                             else {
                                 // response as normal http-proxy
-                                return clientResponseWrite(thisTunnel, OK + CLRF + CLRF);
+                                clientResponseWrite(thisTunnel, OK + CLRF + CLRF);
                             }
                         })
                 }
@@ -128,9 +138,18 @@ class ProxyServer extends net.createServer {
                             if (connectionError) {
                                 return onClose(connectionError);
                             }
-                            return onDirectConnectionOpen(data);
-                        });
 
+                            if (connectionOpt.credentials) {
+                                const headers = parseHeaders(data);
+                                const basedCredentials = Buffer.from(connectionOpt.credentials).toString('base64'); //converting to base64
+                                headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
+                                const newData = rebuildHeaders(headers, data);
+                                clientRequestWrite(thisTunnel, newData)
+                            }
+                            else {
+                                onDirectConnectionOpen(data);
+                            }
+                        });
                 }
                 else if (thisTunnel && thisTunnel.client) {
                     //ToDo injectData will not work on opened https-connection due to ssl (i.e. found a way to implement sslStrip or interception)
