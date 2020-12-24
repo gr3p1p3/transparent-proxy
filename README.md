@@ -56,8 +56,8 @@ The options are functions having follow parameters:
 |bridgedConnection | <code>Object</code> |  Object containing info/data about Tunnel |
 
 
-- upstream-Function need to return a String with format -> IP:PORT of used http-proxy. If 'localhost' is returned, then the host-self will be used as proxy.
-- tcpOutgoingAddress-Function need to return a String with format -> IP. 
+- upstream-Function need to return a String with format -> `IP:PORT` or `USER:PWD@IP:PORT` of used http-proxy. If *'localhost'* is returned, then the host-self will be used as proxy.
+- tcpOutgoingAddress-Function need to return a String with format -> `IP`. 
 
 
 *Note*: These functions will be executed before first tcp-socket-connection is established.
