@@ -53,7 +53,7 @@ The options are functions having follow parameters:
 | Param  | Type                | Description  |
 | ------ | ------------------- | ------------ |
 |data | <code>Buffer</code> |  The received data. |
-|bridgedConnection | <code>Object</code> |  Object containing info/data about Tunnel |
+|bridgedConnection | <code>Session</code> |  Object containing info/data about Tunnel |
 
 
 - upstream-Function need to return a String with format -> `IP:PORT` or `USER:PWD@IP:PORT` of used http-proxy. If *'localhost'* is returned, then the host-self will be used as proxy.
@@ -96,7 +96,7 @@ The Auth-function will be executed while handling Proxy-Authentications.
 | ------ | ------------------- | ------------ |
 |username | <code>String</code> |  The client username. |
 |password | <code>String</code> |  The client password |
-|bridgedConnection | <code>Object</code> |  Object containing info/data about Tunnel |
+|bridgedConnection | <code>Session</code> |  Object containing info/data about Tunnel |
 
 
 

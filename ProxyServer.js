@@ -1,8 +1,6 @@
 const net = require('net');
 
-const clientResponseWrite = require('./core/clientRequestWrite');
-const clientRequestWrite = require('./core/clientResponseWrite');
-const resetSockets = require('./core/resetSockets');
+const Session = require('./core/Session');
 const getConnectionOptions = require('./core/getConnectionOptions');
 const parseHeaders = require('./lib/parseHeaders');
 const rebuildHeaders = require('./lib/rebuildHeaders');
@@ -42,59 +40,69 @@ class ProxyServer extends net.createServer {
             // logger.log('Received request from', remoteID);
 
             function onClose(err) {
+                const thisTunnel = bridgedConnections[remoteID];
                 if (err && err instanceof Error) {
                     //TODO handle more the errorCodes
                     switch (err.code) {
                         case ETIMEDOUT:
-                            clientResponseWrite(bridgedConnections[remoteID], TIMED_OUT + CLRF + CLRF);
+                            thisTunnel.clientResponseWrite(TIMED_OUT + CLRF + CLRF);
                             break;
                         case ENOTFOUND:
-                            clientResponseWrite(bridgedConnections[remoteID], NOT_FOUND + CLRF + CLRF + HTTP_BODIES.NOT_FOUND);
+                            thisTunnel.clientResponseWrite(NOT_FOUND + CLRF + CLRF + HTTP_BODIES.NOT_FOUND);
                             break;
                         default:
                             //log all unhandled errors
                             logger.error(remoteID, err);
-                            clientResponseWrite(bridgedConnections[remoteID], NOT_OK + CLRF + CLRF);
+                            thisTunnel.clientResponseWrite(NOT_OK + CLRF + CLRF);
                     }
                 }
-                resetSockets(remoteID, bridgedConnections);
+                if (thisTunnel) {
+                    thisTunnel.destroy();
+                    delete bridgedConnections[remoteID];
+                }
             }
 
             function onDataFromUpstream(dataFromUpStream) {
+                const thisTunnel = bridgedConnections[remoteID];
                 const responseData = isFunction(injectResponse)
-                    ? injectResponse(dataFromUpStream, bridgedConnections[remoteID])
+                    ? injectResponse(dataFromUpStream, thisTunnel)
                     : dataFromUpStream;
-                clientResponseWrite(bridgedConnections[remoteID], responseData)
+                thisTunnel.clientResponseWrite(responseData)
             }
 
             function onDirectConnectionOpen(srcData) {
+                const thisTunnel = bridgedConnections[remoteID];
                 const requestData = isFunction(injectData)
-                    ? injectData(srcData, bridgedConnections[remoteID])
+                    ? injectData(srcData, thisTunnel)
                     : srcData;
-                clientRequestWrite(bridgedConnections[remoteID], requestData);
+                thisTunnel.clientRequestWrite(requestData);
             }
 
             function prepareTunnel(data, firstHeaderRow) {
+                const thisTunnel = bridgedConnections[remoteID];
+
                 const upstreamHost = firstHeaderRow.split(BLANK)[1];
                 const proxyToUse = usingUpstreamToProxy(upstream, {
                     data,
-                    bridgedConnection: bridgedConnections[remoteID]
+                    bridgedConnection: thisTunnel
                 });
                 const connectionOpt = getConnectionOptions(proxyToUse, upstreamHost);
 
                 //initializing socket and forwarding received request
-                bridgedConnections[remoteID].tunnel = {
+                thisTunnel.tunnel = {
                     ADDRESS: connectionOpt.host,
                     PORT: connectionOpt.port
                 };
-                bridgedConnections[remoteID].client = new net.Socket()
-                    .on(DATA, onDataFromUpstream)
-                    .on(CLOSE, onClose)
-                    .on(ERROR, onClose);
+                thisTunnel.setRequestSocket(
+                    new net.Socket()
+                        .on(DATA, onDataFromUpstream)
+                        .on(CLOSE, onClose)
+                        .on(ERROR, onClose)
+                );
 
                 if (isFunction(tcpOutgoingAddress)) {
                     //THIS ONLY work if server-listener is not 0.0.0.0 but specific iFace/IP
-                    connectionOpt.localAddress = tcpOutgoingAddress(data, bridgedConnections[remoteID]);
+                    connectionOpt.localAddress = tcpOutgoingAddress(data, thisTunnel);
                 }
 
                 return connectionOpt;
@@ -106,7 +114,7 @@ class ProxyServer extends net.createServer {
 
                 if (~firstHeaderRow.indexOf(CONNECT)) { //managing HTTP-Tunnel & HTTPs
                     const connectionOpt = prepareTunnel(data, firstHeaderRow);
-                    thisTunnel.client
+                    thisTunnel._dst
                         .connect(connectionOpt, function onTunnelConnectionOpen(connectionError) {
                             if (connectionError) {
                                 return onClose(connectionError);
@@ -117,7 +125,7 @@ class ProxyServer extends net.createServer {
                                     const basedCredentials = Buffer.from(connectionOpt.credentials).toString('base64'); //converting to base64
                                     headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
                                     const newData = rebuildHeaders(headers, data);
-                                    clientRequestWrite(thisTunnel, newData)
+                                    thisTunnel.clientRequestWrite(newData)
                                 }
                                 else {
                                     onDirectConnectionOpen(data);
@@ -125,15 +133,15 @@ class ProxyServer extends net.createServer {
                             }
                             else {
                                 // response as normal http-proxy
-                                clientResponseWrite(thisTunnel, OK + CLRF + CLRF);
+                                thisTunnel.clientResponseWrite(OK + CLRF + CLRF);
                             }
                         })
                 }
                 else if (firstHeaderRow.indexOf(CONNECT) === -1
-                    && !thisTunnel.client) { // managing http
+                    && !thisTunnel._dst) { // managing http
                     const connectionOpt = prepareTunnel(data, firstHeaderRow);
 
-                    thisTunnel.client
+                    thisTunnel._dst
                         .connect(connectionOpt, function onTunnelConnectionOpen(connectionError) {
                             if (connectionError) {
                                 return onClose(connectionError);
@@ -144,17 +152,17 @@ class ProxyServer extends net.createServer {
                                 const basedCredentials = Buffer.from(connectionOpt.credentials).toString('base64'); //converting to base64
                                 headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
                                 const newData = rebuildHeaders(headers, data);
-                                clientRequestWrite(thisTunnel, newData)
+                                thisTunnel.clientRequestWrite(newData)
                             }
                             else {
                                 onDirectConnectionOpen(data);
                             }
                         });
                 }
-                else if (thisTunnel && thisTunnel.client) {
+                else if (thisTunnel && thisTunnel._dst) {
                     //ToDo injectData will not work on opened https-connection due to ssl (i.e. found a way to implement sslStrip or interception)
                     // onDirectConnectionOpen(data);
-                    clientRequestWrite(thisTunnel, data);
+                    thisTunnel.clientRequestWrite(data);
                 }
                 logger.log(remoteID, '=>', thisTunnel.tunnel);
             }
@@ -169,7 +177,7 @@ class ProxyServer extends net.createServer {
                         const split = dataString.split(CLRF); //TODO make secure
 
                         if (isFunction(auth)
-                            && !thisTunnel.authenticated) {
+                            && !thisTunnel.isAuthenticated()) {
                             const proxyAuth = headers[PROXY_AUTH.toLowerCase()];
                             if (proxyAuth) {
                                 const credentials = proxyAuth
@@ -190,12 +198,12 @@ class ProxyServer extends net.createServer {
                                 }
                                 else {
                                     //return auth-error and close all
-                                    clientResponseWrite(thisTunnel, AUTH_REQUIRED + CLRF + CLRF + HTTP_BODIES.AUTH_REQUIRED);
+                                    thisTunnel.clientResponseWrite(AUTH_REQUIRED + CLRF + CLRF + HTTP_BODIES.AUTH_REQUIRED);
                                     return onClose();
                                 }
                             }
                             else {
-                                return clientResponseWrite(thisTunnel, AUTH_REQUIRED + CLRF + CLRF);
+                                return thisTunnel.clientResponseWrite(AUTH_REQUIRED + CLRF + CLRF);
                             }
                         }
                         else {
@@ -208,12 +216,14 @@ class ProxyServer extends net.createServer {
                 }
             }
 
-            bridgedConnections[remoteID] = {id: remoteID}; //initializing bridged-connection
-            bridgedConnections[remoteID].socket = clientSocket
-                .on(DATA, onDataFromClient)
-                .on(ERROR, onClose)
-                .on(CLOSE, onClose)
-                .on(EXIT, onClose);
+            bridgedConnections[remoteID] = new Session(remoteID); //initializing bridged-connection
+            bridgedConnections[remoteID].setResponseSocket(
+                clientSocket
+                    .on(DATA, onDataFromClient)
+                    .on(ERROR, onClose)
+                    .on(CLOSE, onClose)
+                    .on(EXIT, onClose)
+            );
         }
 
         super(onConnectedClientHandling);
