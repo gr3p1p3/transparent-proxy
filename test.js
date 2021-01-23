@@ -37,11 +37,13 @@ server.listen(10001, '0.0.0.0', function () {
         })
             .on('error', function (err) {
                 logger.error('for', singlePath, 'error =>', err);
-            }).end();
+            })
+            .end();
     }
 
     setTimeout(function closeProxyServer() {
         logger.log('closing transparent-proxy Server');
         server.close();
+        process.exit();
     }, 5000);
 });
