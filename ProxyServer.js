@@ -67,6 +67,7 @@ class ProxyServer extends net.createServer {
                 const responseData = isFunction(injectResponse)
                     ? injectResponse(dataFromUpStream, thisTunnel)
                     : dataFromUpStream;
+
                 thisTunnel.clientResponseWrite(responseData)
             }
 
@@ -75,6 +76,7 @@ class ProxyServer extends net.createServer {
                 const requestData = isFunction(injectData)
                     ? injectData(srcData, thisTunnel)
                     : srcData;
+
                 thisTunnel.clientRequestWrite(requestData);
             }
 
@@ -89,10 +91,7 @@ class ProxyServer extends net.createServer {
                 const connectionOpt = getConnectionOptions(proxyToUse, upstreamHost);
 
                 //initializing socket and forwarding received request
-                thisTunnel.tunnel = {
-                    ADDRESS: connectionOpt.host,
-                    PORT: connectionOpt.port
-                };
+                thisTunnel.setTunnelOpt(connectionOpt.host, connectionOpt.port);
                 thisTunnel.setRequestSocket(
                     new net.Socket()
                         .on(DATA, onDataFromUpstream)
@@ -164,7 +163,7 @@ class ProxyServer extends net.createServer {
                     // onDirectConnectionOpen(data);
                     thisTunnel.clientRequestWrite(data);
                 }
-                logger.log(remoteID, '=>', thisTunnel.tunnel);
+                logger.log(remoteID, '=>', thisTunnel.getTunnelStats());
             }
 
             async function onDataFromClient(data) {
@@ -187,8 +186,8 @@ class ProxyServer extends net.createServer {
                                 const [username, password] = parsedCredentials.split(SEPARATOR); //TODO split at : is not sure enough
                                 let isLogged = auth(username, password, thisTunnel);
 
-                                if (isLogged instanceof Promise) {
-                                    isLogged = await isLogged;
+                                if (isLogged instanceof Promise) { //if async operation...
+                                    isLogged = await isLogged; //...need to resolve promise
                                 }
 
                                 if (isLogged) {
