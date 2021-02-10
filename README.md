@@ -48,7 +48,7 @@ server.listen(8080, '0.0.0.0', function () {
 
 
 
-## `upstream` & `tcpOutgoingAddress` Options
+## `upstream`, `tcpOutgoingAddress`, `injectData` & `injectResponse` Options
 
 The options are functions having follow parameters:
 
@@ -61,9 +61,11 @@ The options are functions having follow parameters:
 - upstream-Function need to return a String with format -> `IP:PORT` or `USER:PWD@IP:PORT` of used http-proxy. If *'localhost'* is returned, then the host-self will be used as proxy.
 - tcpOutgoingAddress-Function need to return a String with format -> `IP`. 
 
-
 *Note*: These functions will be executed before first tcp-socket-connection is established.
 
+
+- injectData-Function need to return a String or buffer for the new spoofed data. This will be upstreamed as request. 
+- injectResponse-Function need to return a String or buffer for the new received data. 
 
 
 ## Upstream to other proxies
