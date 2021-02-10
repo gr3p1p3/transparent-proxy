@@ -42,6 +42,8 @@ server.listen(8080, '0.0.0.0', function () {
 |[options.auth] | <code>Function</code> |  Activate/Handle Proxy-Authentication. Returns or solves to Boolean. |
 |[options.upstream] | <code>Function</code> |  The proxy to be used to upstreaming requests. Returns String. |
 |[options.tcpOutgoingAddress] | <code>Function</code> |  The localAddress to use while sending requests. Returns String |
+|[options.injectData] | <code>Function</code> |  The edited data to upstream. Returns Buffer or string |
+|[options.injectResponse] | <code>Function</code> |  The edited response to return to connected client. Returns Buffer or string |
 |[options.verbose] | <code>Boolean</code> |  Activate verbose mode. |
 
 
