@@ -1,4 +1,4 @@
-const {STRINGS, SLASH_REGEXP, HTTP, HTTPS, HTTP_PORT, HTTPS_PORT} = require('../lib/constants');
+const {STRINGS, SLASH, SLASH_REGEXP, SLASH_REGEXP_ONCE, HTTP, HTTPS, HTTP_PORT, HTTPS_PORT} = require('../lib/constants');
 
 /**
  *
@@ -23,8 +23,15 @@ function getAddressAndPortFromString(ipStringWithPort) {
     }
 
     host = (host)
-        ? host.replace(SLASH_REGEXP, STRINGS.EMPTY)
+        ? host
         : protocol.replace(SLASH_REGEXP, STRINGS.EMPTY);
+
+    if (host.indexOf(SLASH + SLASH) === 0) {
+        host = host.split(SLASH)[2];
+    }
+    else {
+        host = host.split(SLASH)[0];
+    }
 
     port = port || (protocol && ~protocol.indexOf(HTTPS)
         ? HTTPS_PORT

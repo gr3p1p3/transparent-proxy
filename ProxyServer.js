@@ -80,7 +80,7 @@ class ProxyServer extends net.createServer {
                 thisTunnel.clientRequestWrite(requestData);
             }
 
-            function prepareTunnel(data, firstHeaderRow) {
+            function prepareTunnel(data, firstHeaderRow, https = false) {
                 const thisTunnel = bridgedConnections[remoteID];
 
                 const upstreamHost = firstHeaderRow.split(BLANK)[1];
@@ -92,17 +92,61 @@ class ProxyServer extends net.createServer {
 
                 //initializing socket and forwarding received request
                 thisTunnel.setTunnelOpt(connectionOpt.host, connectionOpt.port);
-                thisTunnel.setRequestSocket(
-                    new net.Socket()
-                        .on(DATA, onDataFromUpstream)
-                        .on(CLOSE, onClose)
-                        .on(ERROR, onClose)
-                );
 
                 if (isFunction(tcpOutgoingAddress)) {
                     //THIS ONLY work if server-listener is not 0.0.0.0 but specific iFace/IP
                     connectionOpt.localAddress = tcpOutgoingAddress(data, thisTunnel);
                 }
+
+                function onTunnelHTTPConnectionOpen(connectionError) {
+                    if (connectionError) {
+                        return onClose(connectionError);
+                    }
+
+                    if (connectionOpt.credentials) {
+                        const headers = parseHeaders(data);
+                        const basedCredentials = Buffer.from(connectionOpt.credentials).toString('base64'); //converting to base64
+                        headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
+                        const newData = rebuildHeaders(headers, data);
+                        thisTunnel.clientRequestWrite(newData)
+                    }
+                    else {
+                        onDirectConnectionOpen(data);
+                    }
+                }
+
+                function onTunnelHTTPSConnectionOpen(connectionError) {
+                    if (connectionError) {
+                        return onClose(connectionError);
+                    }
+                    if (connectionOpt.upstreamed) {
+                        if (connectionOpt.credentials) {
+                            const headers = parseHeaders(data);
+                            const basedCredentials = Buffer.from(connectionOpt.credentials).toString('base64'); //converting to base64
+                            headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
+                            const newData = rebuildHeaders(headers, data);
+                            thisTunnel.clientRequestWrite(newData)
+                        }
+                        else {
+                            onDirectConnectionOpen(data);
+                        }
+                    }
+                    else {
+                        // response as normal http-proxy
+                        thisTunnel.clientResponseWrite(OK + CLRF + CLRF);
+                    }
+                }
+
+                const callbackOnConnect = (https)
+                    ? onTunnelHTTPSConnectionOpen
+                    : onTunnelHTTPConnectionOpen;
+
+                thisTunnel.setRequestSocket(
+                    net.createConnection(connectionOpt, callbackOnConnect)
+                        .on(DATA, onDataFromUpstream)
+                        .on(CLOSE, onClose)
+                        .on(ERROR, onClose)
+                );
 
                 return connectionOpt;
             }
@@ -112,51 +156,11 @@ class ProxyServer extends net.createServer {
                 const thisTunnel = bridgedConnections[remoteID];
 
                 if (~firstHeaderRow.indexOf(CONNECT)) { //managing HTTP-Tunnel & HTTPs
-                    const connectionOpt = prepareTunnel(data, firstHeaderRow);
-                    thisTunnel._dst
-                        .connect(connectionOpt, function onTunnelConnectionOpen(connectionError) {
-                            if (connectionError) {
-                                return onClose(connectionError);
-                            }
-                            if (connectionOpt.upstreamed) {
-                                if (connectionOpt.credentials) {
-                                    const headers = parseHeaders(data);
-                                    const basedCredentials = Buffer.from(connectionOpt.credentials).toString('base64'); //converting to base64
-                                    headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
-                                    const newData = rebuildHeaders(headers, data);
-                                    thisTunnel.clientRequestWrite(newData)
-                                }
-                                else {
-                                    onDirectConnectionOpen(data);
-                                }
-                            }
-                            else {
-                                // response as normal http-proxy
-                                thisTunnel.clientResponseWrite(OK + CLRF + CLRF);
-                            }
-                        })
+                    prepareTunnel(data, firstHeaderRow, true);
                 }
                 else if (firstHeaderRow.indexOf(CONNECT) === -1
                     && !thisTunnel._dst) { // managing http
-                    const connectionOpt = prepareTunnel(data, firstHeaderRow);
-
-                    thisTunnel._dst
-                        .connect(connectionOpt, function onTunnelConnectionOpen(connectionError) {
-                            if (connectionError) {
-                                return onClose(connectionError);
-                            }
-
-                            if (connectionOpt.credentials) {
-                                const headers = parseHeaders(data);
-                                const basedCredentials = Buffer.from(connectionOpt.credentials).toString('base64'); //converting to base64
-                                headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
-                                const newData = rebuildHeaders(headers, data);
-                                thisTunnel.clientRequestWrite(newData)
-                            }
-                            else {
-                                onDirectConnectionOpen(data);
-                            }
-                        });
+                    prepareTunnel(data, firstHeaderRow);
                 }
                 else if (thisTunnel && thisTunnel._dst) {
                     //ToDo injectData will not work on opened https-connection due to ssl (i.e. found a way to implement sslStrip or interception)
