@@ -76,7 +76,6 @@ class ProxyServer extends net.createServer {
                 const requestData = isFunction(injectData)
                     ? injectData(srcData, thisTunnel)
                     : srcData;
-
                 thisTunnel.clientRequestWrite(requestData);
             }
 
@@ -106,7 +105,8 @@ class ProxyServer extends net.createServer {
 
                     if (connectionOpt.credentials) {
                         const headers = parseHeaders(data);
-                        const basedCredentials = Buffer.from(connectionOpt.credentials).toString('base64'); //converting to base64
+                        const basedCredentials = Buffer.from(connectionOpt.credentials)
+                            .toString('base64'); //converting to base64
                         headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
                         const newData = rebuildHeaders(headers, data);
                         thisTunnel.clientRequestWrite(newData)
