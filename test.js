@@ -8,8 +8,8 @@ const logger = new Logger(true);
 //init ProxyServer
 const server = new ProxyServer({
     verbose: true,
-    // injectResponse: (data,session) => {
-    //     if(!session.isHttps) {
+    // injectResponse: (data, session) => {
+    //     if (!session.isHttps) {
     //         console.log('SESSION-DATA', data.toString())
     //     }
     //     return data;
