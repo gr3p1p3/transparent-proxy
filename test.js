@@ -6,9 +6,11 @@ const ProxyServer = require('./ProxyServer');
 //init myLogger in verbose-Mode
 const logger = new Logger(true);
 //init ProxyServer
-const server = new ProxyServer({verbose: true});
+const server = new ProxyServer({
+    verbose: true,
+});
 
-const toTest = ['http://ifconfig.me', 'http://icanhazip.com', 'http://ifconfig.co', 'http://asdahke.e'];
+const toTest = ['http://ifconfig.me', 'http://icanhazip.com', 'https://ifconfig.co', 'http://asdahke.e'];
 
 //starting server on port 10001
 server.listen(10001, '0.0.0.0', function () {

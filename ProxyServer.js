@@ -82,6 +82,7 @@ class ProxyServer extends net.createServer {
 
             function prepareTunnel(data, firstHeaderRow, https = false) {
                 const thisTunnel = bridgedConnections[remoteID];
+                thisTunnel.isHttps = !!https;
 
                 const upstreamHost = firstHeaderRow.split(BLANK)[1];
                 const proxyToUse = usingUpstreamToProxy(upstream, {
