@@ -164,9 +164,8 @@ class ProxyServer extends net.createServer {
                     prepareTunnel(data, firstHeaderRow);
                 }
                 else if (thisTunnel && thisTunnel._dst) {
-                    //ToDo injectData will not work on opened https-connection due to ssl (i.e. found a way to implement sslStrip or interception)
-                    // onDirectConnectionOpen(data);
-                    thisTunnel.clientRequestWrite(data);
+                    //injectData will not really work on opened https-connection due to ssl (i.e. found a way to implement sslStrip or interception)
+                    onDirectConnectionOpen(data);
                 }
                 logger.log(remoteID, '=>', thisTunnel.getTunnelStats());
             }

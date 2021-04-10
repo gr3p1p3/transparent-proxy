@@ -22,7 +22,7 @@ function socketDestroy(socket) {
 class Session extends Object {
     /**
      *
-     * @param {string} id
+     * @param id
      */
     constructor(id) {
         super();
@@ -33,6 +33,7 @@ class Session extends Object {
         this._tunnel = {};
         this.user = null;
         this.authenticated = false;
+        this.isHttps = false;
     }
 
     /**
@@ -52,7 +53,7 @@ class Session extends Object {
     }
 
     /**
-     *
+     * Destroy existing sockets for this Session-Instance
      */
     destroy() {
         if (this._dst) {
@@ -64,7 +65,7 @@ class Session extends Object {
     }
 
     /**
-     *
+     * Is Session authenticated by user
      * @returns {boolean|null}
      */
     isAuthenticated() {

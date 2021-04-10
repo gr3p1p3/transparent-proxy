@@ -8,6 +8,12 @@ const logger = new Logger(true);
 //init ProxyServer
 const server = new ProxyServer({
     verbose: true,
+    // injectResponse: (data,session) => {
+    //     if(!session.isHttps) {
+    //         console.log('SESSION-DATA', data.toString())
+    //     }
+    //     return data;
+    // }
 });
 
 const toTest = ['http://ifconfig.me', 'http://icanhazip.com', 'https://ifconfig.co', 'http://asdahke.e'];
