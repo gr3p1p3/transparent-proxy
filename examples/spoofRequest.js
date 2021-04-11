@@ -4,7 +4,7 @@ const exec = util.promisify(require('child_process').exec);
 
 const toTest = ['http://ifconfig.io/ua', 'https://ifconfig.io/ua'];
 
-const ipToSwitch = 'curl/7.55.1';
+const uaToSwitch = 'curl/7.55.1';
 const switchWith = 'My Super Fucking Spoofed UA!';
 
 const server = new ProxyServer({
@@ -12,9 +12,9 @@ const server = new ProxyServer({
     injectData: (data, session) => {
         if (!session.isHttps) {
             // console.log('SESSION-DATA', data.toString()) //you can spoof here
-            if (data.toString().match(ipToSwitch)) {
+            if (data.toString().match(uaToSwitch)) {
                 const newData = Buffer.from(data.toString()
-                    .replace(ipToSwitch, switchWith));
+                    .replace(uaToSwitch, switchWith));
 
                 // console.log('data', data.toString());
                 // console.log('newData', newData.toString());
