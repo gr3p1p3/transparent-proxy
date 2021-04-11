@@ -45,6 +45,7 @@ server.listen(8080, '0.0.0.0', function () {
 |[options.injectData] | <code>Function</code> |  The edited data to upstream. Returns Buffer or string |
 |[options.injectResponse] | <code>Function</code> |  The edited response to return to connected client. Returns Buffer or string |
 |[options.verbose] | <code>Boolean</code> |  Activate verbose mode. |
+|[options.intercept] | <code>Boolean</code> |  Activate interception of encrypted communications. |
 
 
 
@@ -141,6 +142,10 @@ setInterval(function showOpenSockets() {
 }, 2000);
 ```
 
+
+## Interception
+
+...coming soon...
 
 ## Examples
 
