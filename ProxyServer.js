@@ -99,6 +99,45 @@ class ProxyServer extends net.createServer {
                     connectionOpt.localAddress = tcpOutgoingAddress(data, thisTunnel);
                 }
 
+                function updateSockets() {
+                    if (https && intercept) {
+                        //TODO refactor this and leave possibility to use custom-Certificates for user
+                        thisTunnel.setResponseSocket(new tls.TLSSocket(thisTunnel._src, {
+                            rejectUnauthorized: false,
+                            requestCert: false,
+                            isServer: true,
+                            key: '-----BEGIN PRIVATE KEY-----\n' +
+                                'MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgFy3kvv0iHTVaeqcv\n' +
+                                'DIzScropX09AFbieQAy8Dyh8kCihRANCAAQ+UBhyBUy/izj5jozMz+aLpzj7/lPS\n' +
+                                'jAQbWM+8aSDYmu7Ermo6+qz9PatGixPE1c3cq0E9BSqOEVYMXiVcizeQ\n' +
+                                '-----END PRIVATE KEY-----',
+                            cert: '-----BEGIN CERTIFICATE-----\n' +
+                                'MIIBlTCCATygAwIBAgIUcUDMIG9bw3nWnUS5vwGPIgX3zIcwCgYIKoZIzj0EAwIw\n' +
+                                'FDESMBAGA1UEAwwJbG9jYWxob3N0MB4XDTIwMDEyMjIzMjIwN1oXDTIxMDEyMTIz\n' +
+                                'MjIwN1owFDESMBAGA1UEAwwJbG9jYWxob3N0MFkwEwYHKoZIzj0CAQYIKoZIzj0D\n' +
+                                'AQcDQgAEPlAYcgVMv4s4+Y6MzM/mi6c4+/5T0owEG1jPvGkg2JruxK5qOvqs/T2r\n' +
+                                'RosTxNXN3KtBPQUqjhFWDF4lXIs3kKNsMGowaAYDVR0RBGEwX4IJbG9jYWxob3N0\n' +
+                                'ggsqLmxvY2FsaG9zdIIVbG9jYWxob3N0LmxvY2FsZG9tYWluhwR/AAABhwQAAAAA\n' +
+                                'hxAAAAAAAAAAAAAAAAAAAAABhxAAAAAAAAAAAAAAAAAAAAAAMAoGCCqGSM49BAMC\n' +
+                                'A0cAMEQCIH/3IPGNTbCQnr1F1x0r28BtwkhMZPLRSlm7p0uXDv9pAiBi4JQKEwlY\n' +
+                                '6sWzsJyD3vMMAyP9UZm0WJhtcOb6F0wRpg==\n' +
+                                '-----END CERTIFICATE-----'
+                        })
+                            .on(DATA, onDataFromClient)
+                            .on(CLOSE, onClose)
+                            .on(ERROR, onClose));
+
+                        thisTunnel.setRequestSocket(new tls.TLSSocket(thisTunnel._dst, {
+                            rejectUnauthorized: false,
+                            requestCert: false,
+                            isServer: false
+                        })
+                            .on(DATA, onDataFromUpstream)
+                            .on(CLOSE, onClose)
+                            .on(ERROR, onClose));
+                    }
+                }
+
                 function onTunnelHTTPConnectionOpen(connectionError) {
                     if (connectionError) {
                         return onClose(connectionError);
@@ -131,48 +170,13 @@ class ProxyServer extends net.createServer {
                         }
                         else {
                             onDirectConnectionOpen(data);
+                            //TODO updateSockets();
                         }
                     }
                     else {
                         // response as normal http-proxy
                         thisTunnel.clientResponseWrite(OK + CLRF + CLRF);
-
-                        if (https && intercept) {
-                            //TODO refactor this and leave possibility to use custom-Certificates for user
-                            thisTunnel.setResponseSocket(new tls.TLSSocket(thisTunnel._src, {
-                                rejectUnauthorized: false,
-                                requestCert: false,
-                                isServer: true,
-                                key: '-----BEGIN PRIVATE KEY-----\n' +
-                                    'MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgFy3kvv0iHTVaeqcv\n' +
-                                    'DIzScropX09AFbieQAy8Dyh8kCihRANCAAQ+UBhyBUy/izj5jozMz+aLpzj7/lPS\n' +
-                                    'jAQbWM+8aSDYmu7Ermo6+qz9PatGixPE1c3cq0E9BSqOEVYMXiVcizeQ\n' +
-                                    '-----END PRIVATE KEY-----',
-                                cert: '-----BEGIN CERTIFICATE-----\n' +
-                                    'MIIBlTCCATygAwIBAgIUcUDMIG9bw3nWnUS5vwGPIgX3zIcwCgYIKoZIzj0EAwIw\n' +
-                                    'FDESMBAGA1UEAwwJbG9jYWxob3N0MB4XDTIwMDEyMjIzMjIwN1oXDTIxMDEyMTIz\n' +
-                                    'MjIwN1owFDESMBAGA1UEAwwJbG9jYWxob3N0MFkwEwYHKoZIzj0CAQYIKoZIzj0D\n' +
-                                    'AQcDQgAEPlAYcgVMv4s4+Y6MzM/mi6c4+/5T0owEG1jPvGkg2JruxK5qOvqs/T2r\n' +
-                                    'RosTxNXN3KtBPQUqjhFWDF4lXIs3kKNsMGowaAYDVR0RBGEwX4IJbG9jYWxob3N0\n' +
-                                    'ggsqLmxvY2FsaG9zdIIVbG9jYWxob3N0LmxvY2FsZG9tYWluhwR/AAABhwQAAAAA\n' +
-                                    'hxAAAAAAAAAAAAAAAAAAAAABhxAAAAAAAAAAAAAAAAAAAAAAMAoGCCqGSM49BAMC\n' +
-                                    'A0cAMEQCIH/3IPGNTbCQnr1F1x0r28BtwkhMZPLRSlm7p0uXDv9pAiBi4JQKEwlY\n' +
-                                    '6sWzsJyD3vMMAyP9UZm0WJhtcOb6F0wRpg==\n' +
-                                    '-----END CERTIFICATE-----'
-                            })
-                                .on(DATA, onDataFromClient)
-                                .on(CLOSE, onClose)
-                                .on(ERROR, onClose));
-
-                            thisTunnel.setRequestSocket(new tls.TLSSocket(thisTunnel._dst, {
-                                rejectUnauthorized: false,
-                                requestCert: false,
-                                isServer: false
-                            })
-                                .on(DATA, onDataFromUpstream)
-                                .on(CLOSE, onClose)
-                                .on(ERROR, onClose));
-                        }
+                        updateSockets();
                     }
                 }
 
