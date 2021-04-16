@@ -73,7 +73,7 @@ class Session extends Object {
     }
 
     /**
-     *
+     * Set the socket that will receive response
      * @param {net.Socket} socket
      * @returns {Session}
      */
@@ -83,7 +83,7 @@ class Session extends Object {
     }
 
     /**
-     *
+     * Set the socket that will receive request
      * @param {net.Socket} socket
      * @returns {Session}
      */
@@ -93,7 +93,7 @@ class Session extends Object {
     }
 
     /**
-     *
+     * Get own id
      * @returns {string}
      */
     getId() {
@@ -107,7 +107,7 @@ class Session extends Object {
     }
 
     /**
-     *
+     * Get Stats for this tunnel
      * @returns {object}
      */
     getTunnelStats() {

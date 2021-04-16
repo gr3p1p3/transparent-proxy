@@ -145,7 +145,25 @@ setInterval(function showOpenSockets() {
 
 ## Interception
 
-...coming soon...
+The callbacks `injectData` & `injectResponse` could be used to intercept/spoof communication.
+
+#### Session-Instance
+
+The Session-Instance is a Object containing info/data about Tunnel.
+It has following useful attributes/methods:
+
+- isHttps - Is session encrypted.
+- getTunnelStats() - Get Stats for this tunnel
+- getId() - Get Own ID-Session
+- isAuthenticated() - Is the session authenticated by user or not.
+
+
+#### Intercepting HTTPS
+
+The boolean attribute `intercept` allows to break SSL-Communication between Source & Destination.
+
+This will activate Security-Alarm by most every browser/client.
+
 
 ## Examples
 
