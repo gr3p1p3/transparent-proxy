@@ -146,6 +146,7 @@ setInterval(function showOpenSockets() {
 ## Interception
 
 The callbacks `injectData` & `injectResponse` could be used to intercept/spoof communication.
+These functions are executed with the `data` and `session` arguments.
 
 #### Session-Instance
 
