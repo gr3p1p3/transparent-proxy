@@ -12,7 +12,7 @@ const Logger = require('./lib/Logger');
 const {
     DEFAULT_OPTIONS, EVENTS,
     HTTP_BODIES, HTTP_METHODS, HTTP_RESPONSES,
-    STRINGS, ERROR_CODES
+    STRINGS, ERROR_CODES, KEYS
 } = require('./lib/constants');
 
 const {CLOSE, DATA, ERROR, EXIT} = EVENTS;
@@ -106,22 +106,8 @@ class ProxyServer extends net.createServer {
                             rejectUnauthorized: false,
                             requestCert: false,
                             isServer: true,
-                            key: '-----BEGIN PRIVATE KEY-----\n' +
-                                'MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgFy3kvv0iHTVaeqcv\n' +
-                                'DIzScropX09AFbieQAy8Dyh8kCihRANCAAQ+UBhyBUy/izj5jozMz+aLpzj7/lPS\n' +
-                                'jAQbWM+8aSDYmu7Ermo6+qz9PatGixPE1c3cq0E9BSqOEVYMXiVcizeQ\n' +
-                                '-----END PRIVATE KEY-----',
-                            cert: '-----BEGIN CERTIFICATE-----\n' +
-                                'MIIBlTCCATygAwIBAgIUcUDMIG9bw3nWnUS5vwGPIgX3zIcwCgYIKoZIzj0EAwIw\n' +
-                                'FDESMBAGA1UEAwwJbG9jYWxob3N0MB4XDTIwMDEyMjIzMjIwN1oXDTIxMDEyMTIz\n' +
-                                'MjIwN1owFDESMBAGA1UEAwwJbG9jYWxob3N0MFkwEwYHKoZIzj0CAQYIKoZIzj0D\n' +
-                                'AQcDQgAEPlAYcgVMv4s4+Y6MzM/mi6c4+/5T0owEG1jPvGkg2JruxK5qOvqs/T2r\n' +
-                                'RosTxNXN3KtBPQUqjhFWDF4lXIs3kKNsMGowaAYDVR0RBGEwX4IJbG9jYWxob3N0\n' +
-                                'ggsqLmxvY2FsaG9zdIIVbG9jYWxob3N0LmxvY2FsZG9tYWluhwR/AAABhwQAAAAA\n' +
-                                'hxAAAAAAAAAAAAAAAAAAAAABhxAAAAAAAAAAAAAAAAAAAAAAMAoGCCqGSM49BAMC\n' +
-                                'A0cAMEQCIH/3IPGNTbCQnr1F1x0r28BtwkhMZPLRSlm7p0uXDv9pAiBi4JQKEwlY\n' +
-                                '6sWzsJyD3vMMAyP9UZm0WJhtcOb6F0wRpg==\n' +
-                                '-----END CERTIFICATE-----'
+                            key: KEYS.KEY,
+                            cert: KEYS.CERT
                         })
                             .on(DATA, onDataFromClient)
                             .on(CLOSE, onClose)
@@ -199,7 +185,7 @@ class ProxyServer extends net.createServer {
                 const firstHeaderRow = split[0];
                 const thisTunnel = bridgedConnections[remoteID];
 
-                if (~firstHeaderRow.indexOf(CONNECT)) { //managing HTTP-Tunnel & HTTPs
+                if (~firstHeaderRow.indexOf(CONNECT)) { //managing HTTP-Tunnel(upstream) & HTTPs
                     prepareTunnel(data, firstHeaderRow, true);
                 }
                 else if (firstHeaderRow.indexOf(CONNECT) === -1
@@ -207,7 +193,6 @@ class ProxyServer extends net.createServer {
                     prepareTunnel(data, firstHeaderRow);
                 }
                 else if (thisTunnel && thisTunnel._dst) {
-                    //injectData will not really work on opened https-connection due to ssl (i.e. found a way to implement sslStrip or interception)
                     onDirectConnectionOpen(data);
                 }
                 logger.log(remoteID, '=>', thisTunnel.getTunnelStats());
@@ -220,7 +205,7 @@ class ProxyServer extends net.createServer {
                 try {
                     if (dataString && dataString.length > 0) {
                         const headers = parseHeaders(data);
-                        const split = dataString.split(CLRF); //TODO make secure
+                        const split = dataString.split(CLRF); //TODO make secure, split can be limited
 
                         if (isFunction(auth)
                             && !thisTunnel.isAuthenticated()) {
@@ -229,8 +214,9 @@ class ProxyServer extends net.createServer {
                                 const credentials = proxyAuth
                                     .replace(PROXY_AUTH_BASIC, EMPTY);
 
-                                const parsedCredentials = Buffer.from(credentials, 'base64').toString(); //converting from base64
-                                const [username, password] = parsedCredentials.split(SEPARATOR); //TODO split at : is not sure enough
+                                const parsedCredentials = Buffer.from(credentials, 'base64')
+                                    .toString(); //converting from base64
+                                const [username, password] = parsedCredentials.split(SEPARATOR); //TODO split can be limited
                                 let isLogged = auth(username, password, thisTunnel);
 
                                 if (isLogged instanceof Promise) { //if async operation...
