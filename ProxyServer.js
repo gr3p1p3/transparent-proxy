@@ -84,15 +84,10 @@ class ProxyServer extends net.createServer {
                     : srcData;
 
                 thisTunnel.clientRequestWrite(requestData);
-                // if(requestData !== srcData) {
-                //     console.log('writing')
-                //     updateSockets()
-                // }
             }
 
             function updateSockets() {
                 const thisTunnel = bridgedConnections[remoteID];
-                console.log('updatingsockets', thisTunnel.isHttps && intercept)
                 if (thisTunnel.isHttps && intercept) {
                     thisTunnel._updateSockets({onDataFromClient, onDataFromUpstream, onClose})
                 }
