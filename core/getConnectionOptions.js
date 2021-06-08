@@ -37,12 +37,12 @@ function getAddressAndPortFromString(ipStringWithPort) {
         ? HTTPS_PORT
         : HTTP_PORT);
 
-    return {
+    return JSON.parse(JSON.stringify({
         host: host,
         port: parseInt(port),
         protocol: protocol,
-        credentials: credentials
-    };
+        credentials: credentials || undefined
+    }));
 }
 
 /**
@@ -53,7 +53,13 @@ function getAddressAndPortFromString(ipStringWithPort) {
  */
 module.exports = function getConnectionOptions(proxyToUse, upstreamHost) {
     const upstreamed = !!proxyToUse;
-    const upstreamToUse = (upstreamed) ? proxyToUse : upstreamHost;
+    const upstreamToUse = (upstreamed)
+        ? proxyToUse
+        : upstreamHost;
     const config = getAddressAndPortFromString(upstreamToUse);
-    return {...config, ...{upstreamed: upstreamed}};
+    const objectToReturn = {...config, ...{upstreamed: upstreamed}};
+    if (objectToReturn.upstreamed) {
+        objectToReturn.upstream = getAddressAndPortFromString(upstreamHost);
+    }
+    return objectToReturn;
 };

@@ -2,15 +2,16 @@ const ProxyServer = require('../ProxyServer');
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 
-const toTest = ['http://ifconfig.io/ua', 'https://ifconfig.io/ua'];
+const toTest = ['http://ifconfig.io/ua', 'https://ifconfig.me/ua'];
 
 const uaToSwitch = 'curl/7.55.1';
 const switchWith = 'My Super Fucking Spoofed UA!';
 
 const server = new ProxyServer({
-    verbose: false,
+    intercept: true,
+    verbose: true,
     injectData: (data, session) => {
-        if (!session.isHttps) {
+        if (session.isHttps) {
             // console.log('SESSION-DATA', data.toString()) //you can spoof here
             if (data.toString().match(uaToSwitch)) {
                 const newData = Buffer.from(data.toString()
@@ -31,9 +32,10 @@ server.listen(port, '0.0.0.0', async function () {
     console.log('transparent-proxy was started!', server.address());
 
     for (const singlePath of toTest) {
-        const cmd = 'curl' + ' -x localhost:' + port + ' ' + singlePath;
+        const cmd = 'curl' + ' -x localhost:' + port + ' -k ' + singlePath;
         console.log(cmd);
-        const {stdout, stderr} = await exec(cmd);
+        const {stdout, stderr} = await exec(cmd)
+            .catch((err) => ({stdout: err.message}));
         console.log('Response =>', stdout);
     }
     server.close();

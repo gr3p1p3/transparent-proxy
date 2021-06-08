@@ -1,3 +1,7 @@
+const tls = require('tls');
+const {EVENTS, KEYS} = require('../lib/constants');
+const {CLOSE, DATA, ERROR, EXIT} = EVENTS;
+
 /**
  *
  * @param {net.Socket} socket
@@ -100,10 +104,41 @@ class Session extends Object {
         return this._id;
     }
 
-    setTunnelOpt(host, port) {
+    setTunnelOpt(options) {
+        const {host, port, upstream} = options;
         this._tunnel.ADDRESS = host;
         this._tunnel.PORT = port;
+        if (!!upstream) {
+            this._tunnel.UPSTREAM = upstream;
+        }
         return this;
+    }
+
+    _updateSockets(callbacksObject) {
+        const {onDataFromClient, onDataFromUpstream, onClose} = callbacksObject;
+        if (!this._updated) {
+            this.setResponseSocket(new tls.TLSSocket(this._src, {
+                    rejectUnauthorized: false,
+                    requestCert: false,
+                    isServer: true,
+                    key: KEYS.KEY,
+                    cert: KEYS.CERT
+                })
+                    .on(DATA, onDataFromClient)
+                    .on(CLOSE, onClose)
+                    .on(ERROR, onClose)
+            );
+
+            this.setRequestSocket(new tls.TLSSocket(this._dst, {
+                    rejectUnauthorized: false,
+                    requestCert: false,
+                    isServer: false
+                })
+                    .on(DATA, onDataFromUpstream)
+                    .on(CLOSE, onClose)
+                    .on(ERROR, onClose)
+            );
+        }
     }
 
     /**

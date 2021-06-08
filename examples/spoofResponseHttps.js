@@ -10,6 +10,7 @@ const server = new ProxyServer({
     injectResponse: (data, session) => {
         const ipToSwitch = 'x.x.x.x';
         const switchWithIp = '6.6.6.6';
+        // console.log('session.isHttps', session.isHttps)
         if (session.isHttps) {
             const newData = Buffer.from(data.toString()
                 .replace(new RegExp('Content-Length: ' + ipToSwitch.length, 'gmi'),

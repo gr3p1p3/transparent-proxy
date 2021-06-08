@@ -1,5 +1,4 @@
 const net = require('net');
-const tls = require('tls');
 
 const Session = require('./core/Session');
 const getConnectionOptions = require('./core/getConnectionOptions');
@@ -12,11 +11,11 @@ const Logger = require('./lib/Logger');
 const {
     DEFAULT_OPTIONS, EVENTS,
     HTTP_BODIES, HTTP_METHODS, HTTP_RESPONSES,
-    STRINGS, ERROR_CODES, KEYS
+    STRINGS, ERROR_CODES, HTTPS
 } = require('./lib/constants');
 
 const {CLOSE, DATA, ERROR, EXIT} = EVENTS;
-const {ETIMEDOUT, ENOTFOUND} = ERROR_CODES;
+const {ETIMEDOUT, ENOTFOUND, EPROTO} = ERROR_CODES;
 const {CONNECT, GET} = HTTP_METHODS;
 const {AUTH_REQUIRED, OK, NOT_OK, TIMED_OUT, NOT_FOUND} = HTTP_RESPONSES;
 const {BLANK, CLRF, EMPTY, SEPARATOR, PROXY_AUTH, PROXY_AUTH_BASIC} = STRINGS;
@@ -51,6 +50,10 @@ class ProxyServer extends net.createServer {
                         case ENOTFOUND:
                             thisTunnel.clientResponseWrite(NOT_FOUND + CLRF + CLRF + HTTP_BODIES.NOT_FOUND);
                             break;
+                        // case EPROTO:
+                        //     thisTunnel.destroy();
+                        //     // thisTunnel.clientResponseWrite(NOT_OK + CLRF + CLRF + HTTP_BODIES.NOT_FOUND);
+                        //     break;
                         default:
                             //log all unhandled errors
                             logger.error(remoteID, err);
@@ -69,7 +72,9 @@ class ProxyServer extends net.createServer {
                     ? injectResponse(dataFromUpStream, thisTunnel)
                     : dataFromUpStream;
 
-                thisTunnel.clientResponseWrite(responseData)
+                thisTunnel.clientResponseWrite(responseData);
+                //updateSockets if needed after first response
+                updateSockets();
             }
 
             function onDirectConnectionOpen(srcData) {
@@ -77,51 +82,42 @@ class ProxyServer extends net.createServer {
                 const requestData = isFunction(injectData)
                     ? injectData(srcData, thisTunnel)
                     : srcData;
+
                 thisTunnel.clientRequestWrite(requestData);
+                // if(requestData !== srcData) {
+                //     console.log('writing')
+                //     updateSockets()
+                // }
+            }
+
+            function updateSockets() {
+                const thisTunnel = bridgedConnections[remoteID];
+                console.log('updatingsockets', thisTunnel.isHttps && intercept)
+                if (thisTunnel.isHttps && intercept) {
+                    thisTunnel._updateSockets({onDataFromClient, onDataFromUpstream, onClose})
+                }
             }
 
             function prepareTunnel(data, firstHeaderRow, https = false) {
                 const thisTunnel = bridgedConnections[remoteID];
-                thisTunnel.isHttps = !!https;
 
                 const upstreamHost = firstHeaderRow.split(BLANK)[1];
                 const proxyToUse = usingUpstreamToProxy(upstream, {
                     data,
                     bridgedConnection: thisTunnel
                 });
-                const connectionOpt = getConnectionOptions(proxyToUse, upstreamHost);
-
                 //initializing socket and forwarding received request
-                thisTunnel.setTunnelOpt(connectionOpt.host, connectionOpt.port);
+                const connectionOpt = getConnectionOptions(proxyToUse, upstreamHost);
+                thisTunnel.isHttps = !!(
+                    https
+                    || (connectionOpt.upstream
+                    && connectionOpt.upstream.protocol === HTTPS));
+
+                thisTunnel.setTunnelOpt(connectionOpt);
 
                 if (isFunction(tcpOutgoingAddress)) {
                     //THIS ONLY work if server-listener is not 0.0.0.0 but specific iFace/IP
                     connectionOpt.localAddress = tcpOutgoingAddress(data, thisTunnel);
-                }
-
-                function updateSockets() {
-                    if (https && intercept) {
-                        //TODO refactor this and leave possibility to use custom-Certificates for user
-                        thisTunnel.setResponseSocket(new tls.TLSSocket(thisTunnel._src, {
-                            rejectUnauthorized: false,
-                            requestCert: false,
-                            isServer: true,
-                            key: KEYS.KEY,
-                            cert: KEYS.CERT
-                        })
-                            .on(DATA, onDataFromClient)
-                            .on(CLOSE, onClose)
-                            .on(ERROR, onClose));
-
-                        thisTunnel.setRequestSocket(new tls.TLSSocket(thisTunnel._dst, {
-                            rejectUnauthorized: false,
-                            requestCert: false,
-                            isServer: false
-                        })
-                            .on(DATA, onDataFromUpstream)
-                            .on(CLOSE, onClose)
-                            .on(ERROR, onClose));
-                    }
                 }
 
                 function onTunnelHTTPConnectionOpen(connectionError) {
@@ -156,7 +152,6 @@ class ProxyServer extends net.createServer {
                         }
                         else {
                             onDirectConnectionOpen(data);
-                            //TODO updateSockets();
                         }
                     }
                     else {
