@@ -6,6 +6,7 @@ const parseHeaders = require('./lib/parseHeaders');
 const rebuildHeaders = require('./lib/rebuildHeaders');
 const isFunction = require('./lib/isFunction');
 const usingUpstreamToProxy = require('./lib/usingUpstreamToProxy');
+const isValid = require('./lib/isValidASCII');
 const Logger = require('./lib/Logger');
 
 const {
@@ -160,32 +161,36 @@ class ProxyServer extends net.createServer {
                     ? onTunnelHTTPSConnectionOpen
                     : onTunnelHTTPConnectionOpen;
 
-                const responseSocket = net.createConnection(connectionOpt, callbackOnConnect);
+                if (connectionOpt) {
+                    const responseSocket = net.createConnection(connectionOpt, callbackOnConnect);
 
-                thisTunnel.setRequestSocket(responseSocket
-                    .on(DATA, onDataFromUpstream)
-                    .on(CLOSE, onClose)
-                    .on(ERROR, onClose)
-                );
+                    thisTunnel.setRequestSocket(responseSocket
+                        .on(DATA, onDataFromUpstream)
+                        .on(CLOSE, onClose)
+                        .on(ERROR, onClose)
+                    );
+                }
 
                 return connectionOpt;
             }
 
             function handleProxyTunnel(split, data) {
-                const firstHeaderRow = split[0];
-                const thisTunnel = bridgedConnections[remoteID];
+                if (isValid(data.toString())) {
+                    const firstHeaderRow = split[0];
+                    const thisTunnel = bridgedConnections[remoteID];
 
-                if (~firstHeaderRow.indexOf(CONNECT)) { //managing HTTP-Tunnel(upstream) & HTTPs
-                    prepareTunnel(data, firstHeaderRow, true);
+                    if (~firstHeaderRow.indexOf(CONNECT)) { //managing HTTP-Tunnel(upstream) & HTTPs
+                        prepareTunnel(data, firstHeaderRow, true);
+                    }
+                    else if (firstHeaderRow.indexOf(CONNECT) === -1
+                        && !thisTunnel._dst) { // managing http
+                        prepareTunnel(data, firstHeaderRow);
+                    }
+                    else if (thisTunnel && thisTunnel._dst) {
+                        return onDirectConnectionOpen(data);
+                    }
+                    logger.log(remoteID, '=>', thisTunnel.getTunnelStats());
                 }
-                else if (firstHeaderRow.indexOf(CONNECT) === -1
-                    && !thisTunnel._dst) { // managing http
-                    prepareTunnel(data, firstHeaderRow);
-                }
-                else if (thisTunnel && thisTunnel._dst) {
-                    onDirectConnectionOpen(data);
-                }
-                logger.log(remoteID, '=>', thisTunnel.getTunnelStats());
             }
 
             async function onDataFromClient(data) {

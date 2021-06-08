@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 
 const Logger = require('./lib/Logger');
 const ProxyServer = require('./ProxyServer');
@@ -35,7 +36,11 @@ server.listen(10001, '0.0.0.0', function () {
         const newReqOpt = JSON.parse(JSON.stringify(reqOpt));
         newReqOpt.path = singlePath;
 
-        http.request(newReqOpt, function (response) {
+        const agent = (singlePath.indexOf('https') === 0)
+            ? https
+            : http;
+
+        agent.request(newReqOpt, function (response) {
             let responseMsg = '';
 
             response.on('data', function (data) {

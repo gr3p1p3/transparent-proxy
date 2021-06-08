@@ -52,14 +52,20 @@ function getAddressAndPortFromString(ipStringWithPort) {
  * @returns {{host: string, port: number, protocol: string, credentials: string, upstreamed: boolean}}
  */
 module.exports = function getConnectionOptions(proxyToUse, upstreamHost) {
-    const upstreamed = !!proxyToUse;
-    const upstreamToUse = (upstreamed)
-        ? proxyToUse
-        : upstreamHost;
-    const config = getAddressAndPortFromString(upstreamToUse);
-    const objectToReturn = {...config, ...{upstreamed: upstreamed}};
-    if (objectToReturn.upstreamed) {
-        objectToReturn.upstream = getAddressAndPortFromString(upstreamHost);
+    const isValid = require('../lib/isValidASCII');
+    if (isValid(upstreamHost)) {
+        const upstreamed = !!proxyToUse;
+        const upstreamToUse = (upstreamed)
+            ? proxyToUse
+            : upstreamHost;
+        const config = getAddressAndPortFromString(upstreamToUse);
+        const objectToReturn = {...config, ...{upstreamed: upstreamed}};
+        if (objectToReturn.upstreamed) {
+            objectToReturn.upstream = getAddressAndPortFromString(upstreamHost);
+        }
+        return objectToReturn;
     }
-    return objectToReturn;
+    else {
+        return false;
+    }
 };
