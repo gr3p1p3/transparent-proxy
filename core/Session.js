@@ -138,6 +138,7 @@ class Session extends Object {
                     .on(CLOSE, onClose)
                     .on(ERROR, onClose)
             );
+            this._updated = true;
         }
     }
 
