@@ -1,4 +1,4 @@
-const {STRINGS, SLASH, SLASH_REGEXP, SLASH_REGEXP_ONCE, HTTP, HTTPS, HTTP_PORT, HTTPS_PORT} = require('../lib/constants');
+const {STRINGS, SLASH, SLASH_REGEXP, HTTP, HTTPS, HTTP_PORT, HTTPS_PORT} = require('../lib/constants');
 
 /**
  *
@@ -46,10 +46,10 @@ function getAddressAndPortFromString(ipStringWithPort) {
 }
 
 /**
- *
+ * Build options for native nodejs tcp-connection.
  * @param proxyToUse
  * @param upstreamHost
- * @returns {{host: string, port: number, protocol: string, credentials: string, upstreamed: boolean}}
+ * @returns {boolean|{host: string, port: number, protocol: string, credentials: string}}
  */
 module.exports = function getConnectionOptions(proxyToUse, upstreamHost) {
     const isValid = require('../lib/isValidASCII');
@@ -62,6 +62,9 @@ module.exports = function getConnectionOptions(proxyToUse, upstreamHost) {
         const objectToReturn = {...config, ...{upstreamed: upstreamed}};
         if (objectToReturn.upstreamed) {
             objectToReturn.upstream = getAddressAndPortFromString(upstreamHost);
+        }
+        if (!(objectToReturn.port >= 0 && objectToReturn.port < 65536)) {
+            return false;
         }
         return objectToReturn;
     }

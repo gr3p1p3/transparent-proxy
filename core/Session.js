@@ -1,6 +1,6 @@
 const tls = require('tls');
 const {EVENTS, KEYS} = require('../lib/constants');
-const {CLOSE, DATA, ERROR, EXIT} = EVENTS;
+const {CLOSE, DATA, ERROR} = EVENTS;
 
 /**
  *
@@ -105,11 +105,13 @@ class Session extends Object {
     }
 
     setTunnelOpt(options) {
-        const {host, port, upstream} = options;
-        this._tunnel.ADDRESS = host;
-        this._tunnel.PORT = port;
-        if (!!upstream) {
-            this._tunnel.UPSTREAM = upstream;
+        if (options) {
+            const {host, port, upstream} = options;
+            this._tunnel.ADDRESS = host;
+            this._tunnel.PORT = port;
+            if (!!upstream) {
+                this._tunnel.UPSTREAM = upstream;
+            }
         }
         return this;
     }

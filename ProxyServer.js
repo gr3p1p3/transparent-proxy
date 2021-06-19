@@ -6,7 +6,6 @@ const parseHeaders = require('./lib/parseHeaders');
 const rebuildHeaders = require('./lib/rebuildHeaders');
 const isFunction = require('./lib/isFunction');
 const usingUpstreamToProxy = require('./lib/usingUpstreamToProxy');
-const isValid = require('./lib/isValidASCII');
 const Logger = require('./lib/Logger');
 
 const {
@@ -17,7 +16,7 @@ const {
 
 const {CLOSE, DATA, ERROR, EXIT} = EVENTS;
 const {ETIMEDOUT, ENOTFOUND, EPROTO} = ERROR_CODES;
-const {CONNECT, GET} = HTTP_METHODS;
+const {CONNECT} = HTTP_METHODS;
 const {AUTH_REQUIRED, OK, NOT_OK, TIMED_OUT, NOT_FOUND} = HTTP_RESPONSES;
 const {BLANK, CLRF, EMPTY, SEPARATOR, PROXY_AUTH, PROXY_AUTH_BASIC} = STRINGS;
 
@@ -160,8 +159,7 @@ class ProxyServer extends net.createServer {
                     ? onTunnelHTTPSConnectionOpen
                     : onTunnelHTTPConnectionOpen;
 
-                if (connectionOpt
-                    && connectionOpt.port >= 0 && connectionOpt.port < 65536) {
+                if (connectionOpt) {
                     logger.log(remoteID, '=>', thisTunnel.getTunnelStats());
 
                     const responseSocket = net.createConnection(connectionOpt, callbackOnConnect);
