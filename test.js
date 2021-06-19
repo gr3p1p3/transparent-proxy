@@ -1,5 +1,5 @@
-const http = require('http');
-const https = require('https');
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
 
 const Logger = require('./lib/Logger');
 const ProxyServer = require('./ProxyServer');
@@ -17,46 +17,21 @@ const server = new ProxyServer({
     // }
 });
 
-const toTest = ['http://ifconfig.me', 'http://icanhazip.com', 'https://ifconfig.co', 'http://asdahke.e'];
+const toTest = ['https://ifconfig.me', 'http://icanhazip.com', 'https://ifconfig.io/ua', 'http://asdahke.e'];
 
 //starting server on port 10001
-server.listen(10001, '0.0.0.0', function () {
+const PORT = 10001;
+server.listen(PORT, '0.0.0.0', async function () {
     logger.log('transparent-proxy was started!', server.address());
 
-    const reqOpt = {
-        host: '0.0.0.0', port: 10001,
-        method: 'GET',
-        headers: {
-            'User-Agent': 'curl/7.55.1'
-        }
-    };
-
     for (const singlePath of toTest) {
-        logger.log('sending HTTP request to =>', singlePath);
-        const newReqOpt = JSON.parse(JSON.stringify(reqOpt));
-        newReqOpt.path = singlePath;
-
-        const agent = (singlePath.indexOf('https') === 0)
-            ? https
-            : http;
-
-        agent.request(newReqOpt, function (response) {
-            let responseMsg = '';
-
-            response.on('data', function (data) {
-                responseMsg += data.toString();
-                logger.log('for', singlePath, 'received responseData => status:', response.statusCode, '=>', responseMsg);
-            });
-        })
-            .on('error', function (err) {
-                logger.error('for', singlePath, 'error =>', err);
-            })
-            .end();
+        const cmd = 'curl' + ' -x 127.0.0.1:' + PORT + ' ' + singlePath;
+        console.log(cmd);
+        const {stdout, stderr} = await exec(cmd);
+        console.log('Response =>', stdout);
     }
-
-    setTimeout(function closeProxyServer() {
-        logger.log('closing transparent-proxy Server');
-        server.close();
-        process.exit();
-    }, 5000);
+    // setTimeout(function closeProxyServer() {
+    logger.log('Closing transparent-proxy Server');
+    server.close();
+    process.exit();
 });

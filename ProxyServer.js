@@ -96,7 +96,6 @@ class ProxyServer extends net.createServer {
 
             function prepareTunnel(data, firstHeaderRow, https = false) {
                 const thisTunnel = bridgedConnections[remoteID];
-
                 const upstreamHost = firstHeaderRow.split(BLANK)[1];
                 const proxyToUse = usingUpstreamToProxy(upstream, {
                     data,
@@ -162,6 +161,8 @@ class ProxyServer extends net.createServer {
                     : onTunnelHTTPConnectionOpen;
 
                 if (connectionOpt) {
+                    logger.log(remoteID, '=>', thisTunnel.getTunnelStats());
+
                     const responseSocket = net.createConnection(connectionOpt, callbackOnConnect);
 
                     thisTunnel.setRequestSocket(responseSocket
@@ -170,7 +171,6 @@ class ProxyServer extends net.createServer {
                         .on(ERROR, onClose)
                     );
                 }
-
                 return connectionOpt;
             }
 
@@ -188,7 +188,6 @@ class ProxyServer extends net.createServer {
                 else if (thisTunnel && thisTunnel._dst) {
                     return onDirectConnectionOpen(data);
                 }
-                logger.log(remoteID, '=>', thisTunnel.getTunnelStats());
             }
 
             async function onDataFromClient(data) {
