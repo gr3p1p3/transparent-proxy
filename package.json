@@ -1,10 +1,10 @@
 {
   "name": "transparent-proxy",
-  "version": "1.7.10",
+  "version": "1.7.11",
   "description": "Real transparent HTTP-Proxy-Server. Upstream your requests whatever you want!",
   "main": "ProxyServer.js",
   "scripts": {
-    "test": "echo \" Starting Node transparent-proxy on port 8080 for 5 seconds\" && node test.js && exit 0",
+    "test": "node npmTests/test.js && node npmTests/test2.js && node npmTests/test3.js && exit 0",
     "prepublish": "npm test"
   },
   "keywords": [
