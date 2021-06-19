@@ -46,6 +46,7 @@ class Session extends Object {
      */
     clientRequestWrite(data) {
         socketWrite(this._dst, data);
+        return this;
     }
 
     /**
@@ -54,6 +55,7 @@ class Session extends Object {
      */
     clientResponseWrite(data) {
         socketWrite(this._src, data);
+        return this;
     }
 
     /**
@@ -66,11 +68,12 @@ class Session extends Object {
         if (this._src) {
             socketDestroy(this._src);
         }
+        return this;
     }
 
     /**
      * Is Session authenticated by user
-     * @returns {boolean|null}
+     * @returns {boolean}
      */
     isAuthenticated() {
         return this.authenticated;
@@ -142,6 +145,7 @@ class Session extends Object {
             );
             this._updated = true;
         }
+        return this;
     }
 
     /**
