@@ -1,7 +1,6 @@
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 
-const Logger = require('../lib/Logger');
 const ProxyServer = require('../ProxyServer');
 
 async function main() {
@@ -9,8 +8,7 @@ async function main() {
     let ownIp = '';
     const switchWith = '6.6.6.6';
     const IP_REGEXP = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
-    //init myLogger in verbose-Mode
-    const logger = new Logger(true);
+
     const toTest = ['https://ifconfig.me', 'http://ifconfig.me'];
 
     const PORT = 10001; //starting server on port 10001
@@ -42,7 +40,7 @@ async function main() {
     });
 
     server.listen(PORT, '0.0.0.0', async function () {
-        logger.log('transparent-proxy was started!', server.address());
+        console.log('transparent-proxy was started!', server.address());
 
         for (const singlePath of toTest) {
             const cmd = 'curl' + ' -x 127.0.0.1:' + PORT + ' -k ' + singlePath;
@@ -51,7 +49,7 @@ async function main() {
             console.log('Response =>', stdout);
         }
 
-        logger.log('Closing transparent-proxy Server\n');
+        console.log('Closing transparent-proxy Server\n');
         server.close();
         process.exit(0);
     });

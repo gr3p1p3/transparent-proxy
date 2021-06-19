@@ -51,7 +51,6 @@ class ProxyServer extends net.createServer {
                             thisTunnel.clientResponseWrite(NOT_FOUND + CLRF + CLRF + HTTP_BODIES.NOT_FOUND);
                             break;
                         // case EPROTO:
-                        //     thisTunnel.destroy();
                         //     // thisTunnel.clientResponseWrite(NOT_OK + CLRF + CLRF + HTTP_BODIES.NOT_FOUND);
                         //     break;
                         default:
@@ -88,7 +87,7 @@ class ProxyServer extends net.createServer {
 
             function updateSockets() {
                 const thisTunnel = bridgedConnections[remoteID];
-                if (thisTunnel && thisTunnel.isHttps && intercept) {
+                if (intercept && thisTunnel && thisTunnel.isHttps) {
                     thisTunnel._updateSockets({onDataFromClient, onDataFromUpstream, onClose})
                 }
             }
