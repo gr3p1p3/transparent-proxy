@@ -4,7 +4,7 @@
   "description": "Real transparent HTTP-Proxy-Server. Upstream your requests whatever you want!",
   "main": "ProxyServer.js",
   "scripts": {
-    "test": "node npmTests/test.js && node npmTests/test2.js && node npmTests/test3.js && exit 0",
+    "test": "node npmTests/test1.js && node npmTests/test2.js && node npmTests/test3.js && exit 0",
     "prepublish": "npm test"
   },
   "keywords": [

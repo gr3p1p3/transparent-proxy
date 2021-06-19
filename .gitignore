@@ -1,5 +1,4 @@
 .npmignore
 .idea
-test.js
 tests
 tests/*
