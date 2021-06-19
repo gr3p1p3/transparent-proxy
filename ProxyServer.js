@@ -23,7 +23,6 @@ class ProxyServer extends net.createServer {
                 bridgedConnections,
                 {
                     upstream, tcpOutgoingAddress,
-                    verbose,
                     injectData, injectResponse,
                     auth, intercept
                 },

@@ -30,7 +30,6 @@ const DOUBLE_CLRF = CLRF + CLRF;
 module.exports = function onConnectedClientHandling(clientSocket, bridgedConnections, options, logger) {
     const {
         upstream, tcpOutgoingAddress,
-        verbose,
         injectData, injectResponse,
         auth, intercept
     } = options;
