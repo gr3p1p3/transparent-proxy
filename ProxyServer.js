@@ -175,22 +175,20 @@ class ProxyServer extends net.createServer {
             }
 
             function handleProxyTunnel(split, data) {
-                if (isValid(data.toString())) {
-                    const firstHeaderRow = split[0];
-                    const thisTunnel = bridgedConnections[remoteID];
+                const firstHeaderRow = split[0];
+                const thisTunnel = bridgedConnections[remoteID];
 
-                    if (~firstHeaderRow.indexOf(CONNECT)) { //managing HTTP-Tunnel(upstream) & HTTPs
-                        prepareTunnel(data, firstHeaderRow, true);
-                    }
-                    else if (firstHeaderRow.indexOf(CONNECT) === -1
-                        && !thisTunnel._dst) { // managing http
-                        prepareTunnel(data, firstHeaderRow);
-                    }
-                    else if (thisTunnel && thisTunnel._dst) {
-                        return onDirectConnectionOpen(data);
-                    }
-                    logger.log(remoteID, '=>', thisTunnel.getTunnelStats());
+                if (~firstHeaderRow.indexOf(CONNECT)) { //managing HTTP-Tunnel(upstream) & HTTPs
+                    prepareTunnel(data, firstHeaderRow, true);
                 }
+                else if (firstHeaderRow.indexOf(CONNECT) === -1
+                    && !thisTunnel._dst) { // managing http
+                    prepareTunnel(data, firstHeaderRow);
+                }
+                else if (thisTunnel && thisTunnel._dst) {
+                    return onDirectConnectionOpen(data);
+                }
+                logger.log(remoteID, '=>', thisTunnel.getTunnelStats());
             }
 
             async function onDataFromClient(data) {
