@@ -19,6 +19,7 @@ const {ETIMEDOUT, ENOTFOUND, EPROTO} = ERROR_CODES;
 const {CONNECT} = HTTP_METHODS;
 const {AUTH_REQUIRED, OK, NOT_OK, TIMED_OUT, NOT_FOUND} = HTTP_RESPONSES;
 const {BLANK, CLRF, EMPTY, SEPARATOR, PROXY_AUTH, PROXY_AUTH_BASIC} = STRINGS;
+const DOUBLE_CLRF = CLRF + CLRF;
 
 class ProxyServer extends net.createServer {
     constructor(options) {
@@ -45,18 +46,18 @@ class ProxyServer extends net.createServer {
                     //TODO handle more the errorCodes
                     switch (err.code) {
                         case ETIMEDOUT:
-                            thisTunnel.clientResponseWrite(TIMED_OUT + CLRF + CLRF);
+                            thisTunnel.clientResponseWrite(TIMED_OUT + DOUBLE_CLRF);
                             break;
                         case ENOTFOUND:
-                            thisTunnel.clientResponseWrite(NOT_FOUND + CLRF + CLRF + HTTP_BODIES.NOT_FOUND);
+                            thisTunnel.clientResponseWrite(NOT_FOUND + DOUBLE_CLRF + HTTP_BODIES.NOT_FOUND);
                             break;
                         // case EPROTO:
-                        //     // thisTunnel.clientResponseWrite(NOT_OK + CLRF + CLRF + HTTP_BODIES.NOT_FOUND);
+                        //     // thisTunnel.clientResponseWrite(NOT_OK + DOUBLE_CLRF + HTTP_BODIES.NOT_FOUND);
                         //     break;
                         default:
                             //log all unhandled errors
                             logger.error(remoteID, err);
-                            thisTunnel.clientResponseWrite(NOT_OK + CLRF + CLRF);
+                            thisTunnel.clientResponseWrite(NOT_OK + DOUBLE_CLRF);
                     }
                 }
                 if (thisTunnel) {
