@@ -30,7 +30,7 @@ server.listen(PORT, '0.0.0.0', async function () {
         const {stdout, stderr} = await exec(cmd);
         console.log('Response =>', stdout);
     }
-    // setTimeout(function closeProxyServer() {
+
     logger.log('Closing transparent-proxy Server');
     server.close();
     process.exit();
