@@ -163,7 +163,7 @@ It has following useful attributes/methods:
 
 The boolean attribute `intercept` allows to break SSL-Communication between Source & Destination.
 
-This will activate Security-Alarm by most every browser/client.
+This will activate Security-Alarm by most used browsers.
 
 
 ## Examples

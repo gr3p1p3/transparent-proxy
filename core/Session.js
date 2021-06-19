@@ -8,7 +8,7 @@ const {CLOSE, DATA, ERROR, EXIT} = EVENTS;
  * @param data
  */
 function socketWrite(socket, data) {
-    if (socket && !socket.destroyed) {
+    if (socket && !socket.destroyed && data) {
         socket.write(data);
     }
 }

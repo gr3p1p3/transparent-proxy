@@ -89,7 +89,7 @@ class ProxyServer extends net.createServer {
 
             function updateSockets() {
                 const thisTunnel = bridgedConnections[remoteID];
-                if (thisTunnel.isHttps && intercept) {
+                if (thisTunnel && thisTunnel.isHttps && intercept) {
                     thisTunnel._updateSockets({onDataFromClient, onDataFromUpstream, onClose})
                 }
             }
@@ -160,7 +160,8 @@ class ProxyServer extends net.createServer {
                     ? onTunnelHTTPSConnectionOpen
                     : onTunnelHTTPConnectionOpen;
 
-                if (connectionOpt) {
+                if (connectionOpt
+                    && connectionOpt.port >= 0 && connectionOpt.port < 65536) {
                     logger.log(remoteID, '=>', thisTunnel.getTunnelStats());
 
                     const responseSocket = net.createConnection(connectionOpt, callbackOnConnect);
