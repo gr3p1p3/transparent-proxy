@@ -222,12 +222,12 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
                         }
                         else {
                             //return auth-error and close all
-                            thisTunnel.clientResponseWrite(AUTH_REQUIRED + CLRF + CLRF + HTTP_BODIES.AUTH_REQUIRED);
+                            thisTunnel.clientResponseWrite(AUTH_REQUIRED + DOUBLE_CLRF + HTTP_BODIES.AUTH_REQUIRED);
                             return onClose();
                         }
                     }
                     else {
-                        return thisTunnel.clientResponseWrite(AUTH_REQUIRED + CLRF + CLRF);
+                        return thisTunnel.clientResponseWrite(AUTH_REQUIRED + DOUBLE_CLRF);
                     }
                 }
                 else {
