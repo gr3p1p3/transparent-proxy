@@ -100,6 +100,10 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
     function prepareTunnel(data, firstHeaderRow, https = false) {
         const thisTunnel = bridgedConnections[remoteID];
         const upstreamHost = firstHeaderRow.split(BLANK)[1];
+        const initOpt = getConnectionOptions(false, upstreamHost);
+
+        thisTunnel.setTunnelOpt(initOpt); //settings opt before callback
+
         const proxyToUse = usingUpstreamToProxy(upstream, {
             data,
             bridgedConnection: thisTunnel
@@ -111,7 +115,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
             || (connectionOpt.upstream
             && connectionOpt.upstream.protocol === HTTPS));
 
-        thisTunnel.setTunnelOpt(connectionOpt);
+        thisTunnel.setTunnelOpt(connectionOpt); // updating tunnel opt
 
         if (isFunction(tcpOutgoingAddress)) {
             //THIS ONLY work if server-listener is not 0.0.0.0 but specific iFace/IP
