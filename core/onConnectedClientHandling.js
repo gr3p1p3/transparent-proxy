@@ -14,7 +14,7 @@ const {
 } = require('../lib/constants');
 
 const {CLOSE, DATA, ERROR, EXIT} = EVENTS;
-const {ETIMEDOUT, ENOTFOUND, EPROTO} = ERROR_CODES;
+const {ETIMEDOUT, ENOTFOUND, EPIPE, EPROTO} = ERROR_CODES;
 const {CONNECT} = HTTP_METHODS;
 const {AUTH_REQUIRED, OK, NOT_OK, TIMED_OUT, NOT_FOUND} = HTTP_RESPONSES;
 const {BLANK, CLRF, EMPTY, SEPARATOR, PROXY_AUTH, PROXY_AUTH_BASIC} = STRINGS;
@@ -51,6 +51,9 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
                     break;
                 case ENOTFOUND:
                     thisTunnel.clientResponseWrite(NOT_FOUND + DOUBLE_CLRF + HTTP_BODIES.NOT_FOUND);
+                    break;
+                case EPIPE:
+                    logger.error(remoteID, err);
                     break;
                 // case EPROTO:
                 //     // thisTunnel.clientResponseWrite(NOT_OK + DOUBLE_CLRF + HTTP_BODIES.NOT_FOUND);

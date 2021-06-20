@@ -8,18 +8,16 @@ const ipToSwitch = 'x.x.x.x';
 const switchWith = 'bla.bla.bla.bla';
 
 const server = new ProxyServer({
-    verbose: false,
+    verbose: true,
     injectResponse: (data, session) => {
         if (!session.isHttps) {
-            // console.log('SESSION-DATA', data.toString()) //you can spoof here
+            //you can spoof here
             if (data.toString().match(ipToSwitch)) {
                 const newData = Buffer.from(data.toString()
                     .replace(new RegExp('Content-Length: ' + ipToSwitch.length, 'gmi'),
                         'Content-Length: ' + (switchWith.length))
                     .replace(ipToSwitch, switchWith));
 
-                // console.log('data', data.toString());
-                // console.log('newData', newData.toString());
                 return newData;
             }
         }
