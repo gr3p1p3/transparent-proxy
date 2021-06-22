@@ -149,7 +149,7 @@ setInterval(function showOpenSockets() {
 The callbacks `injectData` & `injectResponse` could be used to intercept/spoof communication.
 These functions are executed with the `data` and `session` arguments.
 
-## the `keys` Function
+## The `keys` Function
 
 This function will work only if `intercept` is set to `true`. 
 If activated needs to return an Object `{key:'String', cert:'String'}` like [native tls_connect_options.key & tls_connect_options.cert](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback) or `false` statement. 
