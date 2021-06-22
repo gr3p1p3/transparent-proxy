@@ -152,8 +152,10 @@ These functions are executed with the `data` and `session` arguments.
 ## The `keys` Function
 
 This function will work only if `intercept` is set to `true`. 
+
 If activated needs to return an Object `{key:'String', cert:'String'}` like [native tls_connect_options.key & tls_connect_options.cert](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback) or `false` statement. 
-If no object is returned, then [default keys](https://github.com/gr3p1p3/transparent-proxy/blob/master/lib/constants.js#L55) will be used to update communication.
+
+If no object is returned, then [default keys](https://github.com/gr3p1p3/transparent-proxy/blob/master/lib/constants.js#L56) will be used to update communication.
 
 
 | Param  | Type                | Description  |
