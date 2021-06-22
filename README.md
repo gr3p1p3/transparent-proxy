@@ -57,7 +57,7 @@ The options are functions having follow parameters:
 | Param  | Type                | Description  |
 | ------ | ------------------- | ------------ |
 |data | <code>Buffer</code> |  The received data. |
-|bridgedConnection | <code>Session</code> |  Object containing info/data about Tunnel |
+|session | <code>Session</code> |  Object containing info/data about Tunnel |
 
 
 - upstream-Function need to return a String with format -> `IP:PORT` or `USER:PWD@IP:PORT` of used http-proxy. If *'localhost'* is returned, then the host-self will be used as proxy.
@@ -102,7 +102,7 @@ The Auth-function will be executed while handling Proxy-Authentications.
 | ------ | ------------------- | ------------ |
 |username | <code>String</code> |  The client username. |
 |password | <code>String</code> |  The client password |
-|bridgedConnection | <code>Session</code> |  Object containing info/data about Tunnel |
+|session | <code>Session</code> |  Object containing info/data about Tunnel |
 
 
 
@@ -160,7 +160,7 @@ If no object is returned, then [default keys](https://github.com/gr3p1p3/transpa
 
 | Param  | Type                | Description  |
 | ------ | ------------------- | ------------ |
-|bridgedConnection | <code>Session</code> |  Object containing info/data about Tunnel |
+|session | <code>Session</code> |  Object containing info/data about Tunnel |
 
 
 
@@ -192,7 +192,7 @@ This example upstreams only requests for ifconfig.me to another proxy, for all o
 const ProxyServer = require('transparent-proxy');
 
 const server = new ProxyServer({
-    upstream: function (data, bridgedConnection) {
+    upstream: function (data, session) {
         if (~(data.toString().indexOf('ifconfig.me'))) {
             return 'x.x.x.x:3128'; // upstream to other proxy
         } else {
