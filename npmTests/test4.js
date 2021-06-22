@@ -6,7 +6,7 @@ const ProxyServer = require('../ProxyServer');
 async function main() {
     console.log('Starting TEST4 - Change Some Keys on runtime!');
 
-    const toTest = ['https://ifconfig.io/ua', 'https://ifconfig.me/ua'];
+    const toTest = ['https://ifconfig.me/', 'https://ifconfig.me/ua'];
 
     const PORT = 10001; //starting server on port 10001
 

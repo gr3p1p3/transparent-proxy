@@ -121,7 +121,7 @@ class Session extends Object {
 
     _updateSockets(callbacksObject, KEYS = DEFAULT_KEYS) {
         const {onDataFromClient, onDataFromUpstream, onClose} = callbacksObject;
-        KEYS = KEYS || DEFAULT_KEYS; //TODO maybe more validation?
+        KEYS = KEYS || DEFAULT_KEYS;
 
         if (!this._updated) {
             this.setResponseSocket(new tls.TLSSocket(this._src, {

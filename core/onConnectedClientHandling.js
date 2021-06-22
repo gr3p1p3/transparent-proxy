@@ -95,9 +95,13 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         if (intercept && thisTunnel && thisTunnel.isHttps && !thisTunnel._updated) {
             const keysObject = isFunction(keys)
                 ? keys(thisTunnel)
+                : false;
+
+            const keyToUse = (keysObject && typeof keysObject === 'object' && Object.keys(keysObject).length === 2)
+                ? keysObject
                 : undefined;
 
-            thisTunnel._updateSockets({onDataFromClient, onDataFromUpstream, onClose}, keysObject);
+            thisTunnel._updateSockets({onDataFromClient, onDataFromUpstream, onClose}, keyToUse);
         }
     }
 
