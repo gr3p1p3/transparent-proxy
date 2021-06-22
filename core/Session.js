@@ -1,5 +1,5 @@
 const tls = require('tls');
-const {EVENTS, KEYS} = require('../lib/constants');
+const {EVENTS, DEFAULT_KEYS} = require('../lib/constants');
 const {CLOSE, DATA, ERROR} = EVENTS;
 
 /**
@@ -119,16 +119,17 @@ class Session extends Object {
         return this;
     }
 
-    _updateSockets(callbacksObject) {
+    _updateSockets(callbacksObject, KEYS = DEFAULT_KEYS) {
         const {onDataFromClient, onDataFromUpstream, onClose} = callbacksObject;
+        KEYS = KEYS || DEFAULT_KEYS; //TODO maybe more validation?
+
         if (!this._updated) {
             this.setResponseSocket(new tls.TLSSocket(this._src, {
                     rejectUnauthorized: false,
                     requestCert: false,
                     isServer: true,
-                    //TODO make keys as variable for user
-                    key: KEYS.KEY,
-                    cert: KEYS.CERT
+                    key: KEYS.key,
+                    cert: KEYS.cert
                 })
                     .on(DATA, onDataFromClient)
                     .on(CLOSE, onClose)

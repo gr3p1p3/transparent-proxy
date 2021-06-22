@@ -44,6 +44,7 @@ server.listen(8080, '0.0.0.0', function () {
 |[options.tcpOutgoingAddress] | <code>Function</code> |  The localAddress to use while sending requests. Returns String |
 |[options.injectData] | <code>Function</code> |  The edited data to upstream. Returns Buffer or string |
 |[options.injectResponse] | <code>Function</code> |  The edited response to return to connected client. Returns Buffer or string |
+|[options.keys] | <code>Function</code> |  The keys to use while handshake. It will work only if intercept is true. Returns Object or false |
 |[options.verbose] | <code>Boolean</code> |  Activate verbose mode. |
 |[options.intercept] | <code>Boolean</code> |  Activate interception of encrypted communications. False as default. |
 
@@ -147,6 +148,21 @@ setInterval(function showOpenSockets() {
 
 The callbacks `injectData` & `injectResponse` could be used to intercept/spoof communication.
 These functions are executed with the `data` and `session` arguments.
+
+## the `keys` Function
+
+This function will work only if `intercept` is set to `true`. 
+If activated needs to return an Object `{key:'String', cert:'String'}` like [native tls_connect_options.key & tls_connect_options.cert](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback) or `false` statement. 
+If no object is returned, then [default keys](https://github.com/gr3p1p3/transparent-proxy/blob/master/lib/constants.js#L55) will be used to update communication.
+
+
+| Param  | Type                | Description  |
+| ------ | ------------------- | ------------ |
+|bridgedConnection | <code>Session</code> |  Object containing info/data about Tunnel |
+
+
+
+*Note*: This function will be executed before TLS-Handshake.  
 
 #### Session-Instance
 

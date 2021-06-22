@@ -31,7 +31,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
     const {
         upstream, tcpOutgoingAddress,
         injectData, injectResponse,
-        auth, intercept
+        auth, intercept, keys
     } = options;
 
 
@@ -92,8 +92,12 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
 
     function updateSockets() {
         const thisTunnel = bridgedConnections[remoteID];
-        if (intercept && thisTunnel && thisTunnel.isHttps) {
-            thisTunnel._updateSockets({onDataFromClient, onDataFromUpstream, onClose})
+        if (intercept && thisTunnel && thisTunnel.isHttps && !thisTunnel._updated) {
+            const keysObject = isFunction(keys)
+                ? keys(thisTunnel)
+                : undefined;
+
+            thisTunnel._updateSockets({onDataFromClient, onDataFromUpstream, onClose}, keysObject);
         }
     }
 
