@@ -43,6 +43,7 @@ class Session extends Object {
     /**
      *
      * @param {buffer|string} data - The data to send.
+     * @returns {Session}
      */
     clientRequestWrite(data) {
         socketWrite(this._dst, data);
@@ -52,6 +53,7 @@ class Session extends Object {
     /**
      *
      * @param {buffer|string} data - The data to send.
+     * @returns {Session}
      */
     clientResponseWrite(data) {
         socketWrite(this._src, data);
@@ -60,6 +62,7 @@ class Session extends Object {
 
     /**
      * Destroy existing sockets for this Session-Instance
+     * @returns {Session}
      */
     destroy() {
         if (this._dst) {
@@ -107,6 +110,24 @@ class Session extends Object {
         return this._id;
     }
 
+    /**
+     *
+     * @param {string} username
+     * @returns {Session}
+     */
+    setUserAuthentication(username) {
+        if (username) {
+            this.authenticated = true;
+            this.user = username;
+        }
+        return this;
+    }
+
+    /**
+     *
+     * @param options
+     * @returns {Session}
+     */
     setTunnelOpt(options) {
         if (options) {
             const {host, port, upstream} = options;
@@ -119,6 +140,13 @@ class Session extends Object {
         return this;
     }
 
+    /**
+     *
+     * @param callbacksObject
+     * @param KEYS
+     * @returns {Session}
+     * @private
+     */
     _updateSockets(callbacksObject, KEYS = DEFAULT_KEYS) {
         const {onDataFromClient, onDataFromUpstream, onClose} = callbacksObject;
         KEYS = KEYS || DEFAULT_KEYS;
@@ -152,7 +180,7 @@ class Session extends Object {
 
     /**
      * Get Stats for this tunnel
-     * @returns {object}
+     * @returns {object} - {ADDRESS:'String', PORT:Number, UPSTREAM:{ADDRESS,PORT}}
      */
     getTunnelStats() {
         return this._tunnel;

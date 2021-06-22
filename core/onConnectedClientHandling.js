@@ -231,8 +231,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
                         }
 
                         if (isLogged) {
-                            thisTunnel.authenticated = true;
-                            thisTunnel.user = username;
+                            thisTunnel.setUserAuthentication(username);
                             return handleProxyTunnel(split, data);
                         }
                         else {
