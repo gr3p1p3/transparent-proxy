@@ -16,9 +16,7 @@ async function main() {
         intercept: true,
         keys: (session) => {
             const tunnel = session.getTunnelStats();
-            // if (tunnel.ADDRESS === 'ifconfig.io') {
-            //     return {key: '', cert: ''};
-            // }
+            console.log('\t\t=> Could change keys for', tunnel);
             return false;
         }
     });
