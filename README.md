@@ -125,29 +125,17 @@ server.listen(8080, '0.0.0.0', function () {
 ```
 
 
-
-## .getBridgedConnections()
-
-```javascript
-const ProxyServer = require('transparent-proxy');
-const server = new ProxyServer();
-
-//starting server on port 8080
-server.listen(8080, '0.0.0.0', function () {
-    console.log('Proxy-Server started!', server.address());
-});
-
-setInterval(function showOpenSockets() {
-    const bridgedConnections = server.getBridgedConnections();
-    console.log([new Date()], 'OPEN =>', Object.keys(bridgedConnections).length)
-}, 2000);
-```
-
-
 ## Interception
 
 The callbacks `injectData` & `injectResponse` could be used to intercept/spoof communication.
 These functions are executed with the `data` and `session` arguments.
+
+#### Intercepting HTTPS
+
+The boolean attribute `intercept` allows to break SSL-Communication between Source & Destination.
+
+This will activate Security-Alarm by most used browsers.
+
 
 ## The `keys` Function
 
@@ -166,6 +154,8 @@ If no object is returned, then [default keys](https://github.com/gr3p1p3/transpa
 
 *Note*: This function will be executed before TLS-Handshake.  
 
+
+
 #### Session-Instance
 
 The Session-Instance is a Object containing info/data about Tunnel.
@@ -177,11 +167,23 @@ It has following useful attributes/methods:
 - isAuthenticated() - Is the session authenticated by user or not.
 
 
-#### Intercepting HTTPS
+## .getBridgedConnections()
 
-The boolean attribute `intercept` allows to break SSL-Communication between Source & Destination.
+```javascript
+const ProxyServer = require('transparent-proxy');
+const server = new ProxyServer();
 
-This will activate Security-Alarm by most used browsers.
+//starting server on port 8080
+server.listen(8080, '0.0.0.0', function () {
+    console.log('Proxy-Server started!', server.address());
+});
+
+setInterval(function showOpenSockets() {
+    const bridgedConnections = server.getBridgedConnections();
+    console.log([new Date()], 'OPEN =>', Object.keys(bridgedConnections).length)
+}, 2000);
+```
+
 
 
 ## Examples
