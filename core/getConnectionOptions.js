@@ -49,7 +49,7 @@ function getAddressAndPortFromString(ipStringWithPort) {
  * Build options for native nodejs tcp-connection.
  * @param proxyToUse
  * @param upstreamHost
- * @returns {boolean|{host: string, port: number, protocol: string, credentials: string}}
+ * @returns {boolean|{host: string, port: number, protocol: string, credentials: string, upstreamed:boolean}}
  */
 module.exports = function getConnectionOptions(proxyToUse, upstreamHost) {
     const isValid = require('../lib/isValidASCII');
