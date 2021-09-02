@@ -105,7 +105,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         }
     }
 
-    function prepareTunnel(data, firstHeaderRow, https = false) {
+    function prepareTunnel(data, firstHeaderRow, isConnectMethod = false) {
         const thisTunnel = bridgedConnections[remoteID];
         const upstreamHost = firstHeaderRow.split(BLANK)[1];
         const initOpt = getConnectionOptions(false, upstreamHost);
@@ -119,7 +119,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         //initializing socket and forwarding received request
         const connectionOpt = getConnectionOptions(proxyToUse, upstreamHost);
         thisTunnel.isHttps = !!(
-            https
+            isConnectMethod
             || (connectionOpt.upstream
             && connectionOpt.upstream.protocol === HTTPS));
 
@@ -171,7 +171,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
             }
         }
 
-        const callbackOnConnect = (https)
+        const callbackOnConnect = (isConnectMethod)
             ? onTunnelHTTPSConnectionOpen
             : onTunnelHTTPConnectionOpen;
 
