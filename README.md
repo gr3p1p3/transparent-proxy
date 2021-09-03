@@ -137,6 +137,34 @@ The boolean attribute `intercept` allows to break SSL-Communication between Sour
 This will activate Security-Alarm by most used browsers.
 
 
+```javascript
+const uaToSwitch = 'curl/7.55.1';
+const switchWith = 'My Super Fucking Spoofed UA!';
+
+const server = new ProxyServer({
+    intercept: true,
+    verbose: true,
+    injectData: (data, session) => {
+        if (session.isHttps) {
+            if (data.toString().match(uaToSwitch)) {
+                return Buffer.from(data.toString()
+                    .replace(uaToSwitch, switchWith));
+            }
+        }
+        return data;
+    }
+});
+```
+
+```bash
+curl -x localhost:8080 -k http://ifconfig.io/ua
+curl/7.55.1
+
+curl -x localhost:8080 -k https://ifconfig.me/ua
+My Super Fucking Spoofed UA!
+```
+
+
 ## The `keys` Function
 
 This function will work only if `intercept` is set to `true`. 
