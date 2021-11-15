@@ -17,6 +17,7 @@
     "upstream",
     "server",
     "squid",
+    "privoxy",
     "tcp"
   ],
   "author": "gr3p",

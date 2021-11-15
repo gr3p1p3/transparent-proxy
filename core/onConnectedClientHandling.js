@@ -41,6 +41,9 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
 
     // logger.log('Received request from', remoteID);
 
+    /**
+     * @param {Error} err
+     */
     function onClose(err) {
         const thisTunnel = bridgedConnections[remoteID];
         if (err && err instanceof Error) {
@@ -70,6 +73,9 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         }
     }
 
+    /**
+     * @param {buffer} dataFromUpStream
+     */
     function onDataFromUpstream(dataFromUpStream) {
         const thisTunnel = bridgedConnections[remoteID];
         const responseData = isFunction(injectResponse)
@@ -81,6 +87,9 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         updateSockets();
     }
 
+    /**
+     * @param {buffer} srcData
+     */
     function onDirectConnectionOpen(srcData) {
         const thisTunnel = bridgedConnections[remoteID];
         const requestData = isFunction(injectData)
@@ -105,6 +114,12 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         }
     }
 
+    /**
+     * @param {buffer} data
+     * @param {string} firstHeaderRow
+     * @param {boolean} isConnectMethod - false as default.
+     * @returns {boolean|{host: string, port: number, protocol: string, credentials: string, upstreamed: boolean}}
+     */
     function prepareTunnel(data, firstHeaderRow, isConnectMethod = false) {
         const thisTunnel = bridgedConnections[remoteID];
         const upstreamHost = firstHeaderRow.split(BLANK)[1];
@@ -130,6 +145,9 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
             connectionOpt.localAddress = tcpOutgoingAddress(data, thisTunnel);
         }
 
+        /**
+         * @param {Error} connectionError
+         */
         function onTunnelHTTPConnectionOpen(connectionError) {
             if (connectionError) {
                 return onClose(connectionError);
@@ -148,6 +166,10 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
             }
         }
 
+        /**
+         * @param {Error} connectionError
+         * @returns {Promise<void>}
+         */
         async function onTunnelHTTPSConnectionOpen(connectionError) {
             if (connectionError) {
                 return onClose(connectionError);
@@ -189,6 +211,10 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         return connectionOpt;
     }
 
+    /**
+     * @param {Array<string>} split
+     * @param {buffer} data
+     */
     function handleProxyTunnel(split, data) {
         const firstHeaderRow = split[0];
         const thisTunnel = bridgedConnections[remoteID];
@@ -205,6 +231,10 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         }
     }
 
+    /**
+     * @param {buffer} data
+     * @returns {Promise<Session|void>}
+     */
     async function onDataFromClient(data) {
         const dataString = data.toString();
         const thisTunnel = bridgedConnections[remoteID];

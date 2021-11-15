@@ -1,7 +1,6 @@
 const {STRINGS, SLASH, SLASH_REGEXP, HTTP, HTTPS, HTTP_PORT, HTTPS_PORT} = require('../lib/constants');
 
 /**
- *
  * @param ipStringWithPort
  * @returns {{host: string, port: number, protocol: string, credentials: string}}
  */
