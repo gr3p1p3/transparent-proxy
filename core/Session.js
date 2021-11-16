@@ -41,7 +41,6 @@ class Session extends Object {
     }
 
     /**
-     *
      * @param {buffer|string} data - The data to send.
      * @returns {Session}
      */
@@ -51,7 +50,6 @@ class Session extends Object {
     }
 
     /**
-     *
      * @param {buffer|string} data - The data to send.
      * @returns {Session}
      */
@@ -111,7 +109,6 @@ class Session extends Object {
     }
 
     /**
-     *
      * @param {string} username
      * @returns {Session}
      */
@@ -124,8 +121,7 @@ class Session extends Object {
     }
 
     /**
-     *
-     * @param options
+     * @param {object} options
      * @returns {Session}
      */
     setTunnelOpt(options) {
@@ -141,9 +137,8 @@ class Session extends Object {
     }
 
     /**
-     *
-     * @param callbacksObject
-     * @param KEYS
+     * @param {object} callbacksObject
+     * @param {object} KEYS - {key:{string},cert:{string}}
      * @returns {Session}
      * @private
      */
