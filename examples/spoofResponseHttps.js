@@ -1,6 +1,8 @@
-const ProxyServer = require('../ProxyServer');
-const util = require('util');
-const exec = util.promisify(require('child_process').exec);
+import { ProxyServer } from '../ProxyServer.js';
+import { util } from 'util';
+import { exec as child_process_exec } from 'child_process';
+
+const exec = util.promisify(exec);
 
 const toTest = ['http://v4.ident.me/', 'https://v4.ident.me/'];
 

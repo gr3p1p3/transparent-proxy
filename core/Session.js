@@ -1,5 +1,5 @@
-const tls = require('tls');
-const {EVENTS, DEFAULT_KEYS} = require('../lib/constants');
+import { TLSSocket } from 'tls';
+import { EVENTS, DEFAULT_KEYS } from '../lib/constants.js';
 const {CLOSE, DATA, ERROR} = EVENTS;
 
 /**
@@ -147,7 +147,7 @@ class Session extends Object {
         KEYS = KEYS || DEFAULT_KEYS;
 
         if (!this._updated) {
-            this.setResponseSocket(new tls.TLSSocket(this._src, {
+            this.setResponseSocket(new TLSSocket(this._src, {
                     rejectUnauthorized: false,
                     requestCert: false,
                     isServer: true,
@@ -159,7 +159,7 @@ class Session extends Object {
                     .on(ERROR, onClose)
             );
 
-            this.setRequestSocket(new tls.TLSSocket(this._dst, {
+            this.setRequestSocket(new TLSSocket(this._dst, {
                     rejectUnauthorized: false,
                     requestCert: false,
                     isServer: false
@@ -182,4 +182,4 @@ class Session extends Object {
     }
 }
 
-module.exports = Session;
+export { Session };

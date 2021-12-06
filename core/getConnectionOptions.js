@@ -1,4 +1,5 @@
-const {STRINGS, SLASH, SLASH_REGEXP, HTTP, HTTPS, HTTP_PORT, HTTPS_PORT} = require('../lib/constants');
+import { STRINGS, SLASH, SLASH_REGEXP, HTTP, HTTPS, HTTP_PORT, HTTPS_PORT } from '../lib/constants.js';
+import { isValid } from '../lib/isValidASCII.js';
 
 /**
  * @param ipStringWithPort
@@ -50,8 +51,7 @@ function getAddressAndPortFromString(ipStringWithPort) {
  * @param upstreamHost
  * @returns {boolean|{host: string, port: number, protocol: string, credentials: string, upstreamed:boolean}}
  */
-module.exports = function getConnectionOptions(proxyToUse, upstreamHost) {
-    const isValid = require('../lib/isValidASCII');
+function getConnectionOptions(proxyToUse, upstreamHost) {
     if (isValid(upstreamHost)) {
         const upstreamed = !!proxyToUse;
         const upstreamToUse = (upstreamed)
@@ -71,3 +71,5 @@ module.exports = function getConnectionOptions(proxyToUse, upstreamHost) {
         return false;
     }
 };
+
+export { getConnectionOptions };

@@ -1,17 +1,17 @@
-const net = require('net');
+import { createConnection } from 'net';
 
-const Session = require('./Session');
-const getConnectionOptions = require('./getConnectionOptions');
-const parseHeaders = require('../lib/parseHeaders');
-const rebuildHeaders = require('../lib/rebuildHeaders');
-const isFunction = require('../lib/isFunction');
-const usingUpstreamToProxy = require('../lib/usingUpstreamToProxy');
+import { Session } from './Session.js';
+import { getConnectionOptions } from './getConnectionOptions.js';
+import { parseHeaders } from '../lib/parseHeaders.js';
+import { rebuildHeaders } from '../lib/rebuildHeaders.js';
+import { isFunction } from '../lib/isFunction.js';
+import { usingUpstreamToProxy } from '../lib/usingUpstreamToProxy.js';
 
-const {
+import {
     EVENTS,
     HTTP_BODIES, HTTP_METHODS, HTTP_RESPONSES,
     STRINGS, ERROR_CODES, HTTPS
-} = require('../lib/constants');
+} from '../lib/constants.js';
 
 const {CLOSE, DATA, ERROR, EXIT} = EVENTS;
 const {ETIMEDOUT, ENOTFOUND, EPIPE, EPROTO} = ERROR_CODES;
@@ -27,7 +27,7 @@ const DOUBLE_CLRF = CLRF + CLRF;
  * @param options
  * @param logger
  */
-module.exports = function onConnectedClientHandling(clientSocket, bridgedConnections, options, logger) {
+function onConnectedClientHandling(clientSocket, bridgedConnections, options, logger) {
     const {
         upstream, tcpOutgoingAddress,
         injectData, injectResponse,
@@ -200,7 +200,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         if (connectionOpt) {
             logger.log(remoteID, '=>', thisTunnel.getTunnelStats());
 
-            const responseSocket = net.createConnection(connectionOpt, callbackOnConnect);
+            const responseSocket = createConnection(connectionOpt, callbackOnConnect);
 
             thisTunnel.setRequestSocket(responseSocket
                 .on(DATA, onDataFromUpstream)
@@ -293,3 +293,5 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
             .on(EXIT, onClose)
     );
 };
+
+export { onConnectedClientHandling };

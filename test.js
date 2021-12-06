@@ -1,6 +1,9 @@
-const util = require('util');
-const exec = util.promisify(require('child_process').exec);
-const ProxyServer = require('./ProxyServer');
+import { exec as child_process_exec } from 'child_process';
+import { promisify } from 'util';
+
+import { ProxyServer } from './ProxyServer.js';
+
+const exec = promisify(child_process_exec);
 
 async function test1() {
     console.log('Starting TEST1 - Normal Transparent-Proxy!');
@@ -201,4 +204,4 @@ async function main() {
     await test5();
 }
 
-return main();
+main();

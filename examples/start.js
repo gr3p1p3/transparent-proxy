@@ -1,4 +1,4 @@
-const ProxyServer = require('../ProxyServer');
+import { ProxyServer } from '../ProxyServer.js';
 
 //init ProxyServer
 const server = new ProxyServer({verbose:true});

@@ -1,12 +1,12 @@
-const net = require('net');
+import { createServer } from 'net';
 
-const onConnectedClientHandling = require('./core/onConnectedClientHandling');
-const Logger = require('./lib/Logger');
+import { onConnectedClientHandling } from './core/onConnectedClientHandling.js';
+import { Logger } from './lib/Logger.js';
 
-const {DEFAULT_OPTIONS} = require('./lib/constants');
+import { DEFAULT_OPTIONS } from './lib/constants.js';
 
 
-class ProxyServer extends net.createServer {
+class ProxyServer extends createServer {
     constructor(options) {
         const {
             upstream, tcpOutgoingAddress,
@@ -36,4 +36,4 @@ class ProxyServer extends net.createServer {
     };
 }
 
-module.exports = ProxyServer;
+export { ProxyServer };

@@ -20,6 +20,7 @@
     "privoxy",
     "tcp"
   ],
+  "type": "module",
   "author": "gr3p",
   "license": "ISC",
   "homepage": "https://github.com/gr3p1p3/transparent-proxy"

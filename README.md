@@ -21,7 +21,7 @@ npm i transparent-proxy
 ## Use
 
 ```javascript
-const ProxyServer = require('transparent-proxy');
+import { ProxyServer } from 'transparent-proxy';
 
 //init ProxyServer
 const server = new ProxyServer();
@@ -76,7 +76,7 @@ If you don't want to use the host of active instance self, then you need to upst
 This can be done with `upstream` attribute.
 
 ```javascript
-const ProxyServer = require('transparent-proxy');
+import { ProxyServer } from 'transparent-proxy';
 
 const server = new ProxyServer({
     upstream: function () {
@@ -110,7 +110,7 @@ The Auth-function will be executed while handling Proxy-Authentications.
 
 
 ```javascript
-const ProxyServer = require('transparent-proxy');
+import { ProxyServer } from 'transparent-proxy';
 
 const server = new ProxyServer({
     auth: function (username, password) {
@@ -198,7 +198,7 @@ It has following useful attributes/methods:
 ## .getBridgedConnections()
 
 ```javascript
-const ProxyServer = require('transparent-proxy');
+import { ProxyServer } from 'transparent-proxy';
 const server = new ProxyServer();
 
 //starting server on port 8080
@@ -219,7 +219,7 @@ setInterval(function showOpenSockets() {
 This example upstreams only requests for ifconfig.me to another proxy, for all other requests will be used localhost.
 
 ```javascript
-const ProxyServer = require('transparent-proxy');
+import { ProxyServer } from 'transparent-proxy';
 
 const server = new ProxyServer({
     upstream: function (data, session) {
