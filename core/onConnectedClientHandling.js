@@ -118,16 +118,16 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
      * @param {buffer} data
      * @param {string} firstHeaderRow
      * @param {boolean} isConnectMethod - false as default.
-     * @returns {boolean|{host: string, port: number, protocol: string, credentials: string, upstreamed: boolean}}
+     * @returns Promise{boolean|{host: string, port: number, protocol: string, credentials: string, upstreamed: boolean}}
      */
-    function prepareTunnel(data, firstHeaderRow, isConnectMethod = false) {
+    async function prepareTunnel(data, firstHeaderRow, isConnectMethod = false) {
         const thisTunnel = bridgedConnections[remoteID];
         const upstreamHost = firstHeaderRow.split(BLANK)[1];
         const initOpt = getConnectionOptions(false, upstreamHost);
 
         thisTunnel.setTunnelOpt(initOpt); //settings opt before callback
 
-        const proxyToUse = usingUpstreamToProxy(upstream, {
+        const proxyToUse = await usingUpstreamToProxy(upstream, {
             data,
             bridgedConnection: thisTunnel
         });
@@ -220,11 +220,11 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         const thisTunnel = bridgedConnections[remoteID];
 
         if (~firstHeaderRow.indexOf(CONNECT)) { //managing HTTP-Tunnel(upstream) & HTTPs
-            prepareTunnel(data, firstHeaderRow, true);
+            return prepareTunnel(data, firstHeaderRow, true);
         }
         else if (firstHeaderRow.indexOf(CONNECT) === -1
             && !thisTunnel._dst) { // managing http
-            prepareTunnel(data, firstHeaderRow);
+            return prepareTunnel(data, firstHeaderRow);
         }
         else if (thisTunnel && thisTunnel._dst) {
             return onDirectConnectionOpen(data);

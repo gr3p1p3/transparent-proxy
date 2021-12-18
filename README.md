@@ -60,7 +60,7 @@ The options are functions having follow parameters:
 |session | <code>Session</code> |  Object containing info/data about Tunnel |
 
 
-- upstream-Function need to return a String with format -> `IP:PORT` or `USER:PWD@IP:PORT` of used http-proxy. If *'localhost'* is returned, then the host-self will be used as proxy.
+- upstream-Function need to return/resolve a String with format -> `IP:PORT` or `USER:PWD@IP:PORT` of used http-proxy. If *'localhost'* is returned/resolved, then the host-self will be used as proxy.
 - tcpOutgoingAddress-Function need to return a String with format -> `IP`. 
 
 *Note*: These functions will be executed before first tcp-socket-connection is established.
@@ -81,6 +81,24 @@ const ProxyServer = require('transparent-proxy');
 const server = new ProxyServer({
     upstream: function () {
           return 'x.x.x.x:3128'; // upstream to other proxy
+    }
+});
+
+//starting server on port 8080
+server.listen(8080, '0.0.0.0', function () {
+    console.log('TCP-Proxy-Server started!', server.address());
+});
+```
+
+You can also use an async function to upstream your requests:
+
+```javascript
+const ProxyServer = require('transparent-proxy');
+
+const server = new ProxyServer({
+    upstream: async function () {
+         //make some async task before
+         return 'x.x.x.x:3128'; // upstream to other proxy
     }
 });
 
