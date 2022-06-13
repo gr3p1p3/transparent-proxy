@@ -3,7 +3,7 @@ const {EVENTS, DEFAULT_KEYS} = require('../lib/constants');
 const {CLOSE, DATA, ERROR} = EVENTS;
 
 /**
- *
+ * Write data of given socket
  * @param {net.Socket} socket
  * @param data
  */
@@ -14,7 +14,7 @@ function socketWrite(socket, data) {
 }
 
 /**
- *
+ * Destroy the socket
  * @param {net.Socket} socket
  */
 function socketDestroy(socket) {
@@ -26,7 +26,7 @@ function socketDestroy(socket) {
 class Session extends Object {
     /**
      *
-     * @param id
+     * @param {string} id - The used ID.
      */
     constructor(id) {
         super();
