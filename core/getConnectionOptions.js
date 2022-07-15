@@ -13,7 +13,7 @@ function getAddressAndPortFromString(ipStringWithPort) {
     }
 
     let [protocol, host, port] = targetHost.split(STRINGS.SEPARATOR);
-    if (protocol.indexOf(HTTP) === -1) {
+    if (protocol.indexOf('://') === -1) {
         port = host;
         host = protocol;
         protocol = (port && parseInt(port) === HTTPS_PORT)
