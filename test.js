@@ -97,7 +97,7 @@ async function test3() {
         verbose: true,
         intercept: true,
         injectData: (data, session) => {
-            return Buffer.from(data.toString().replace('curl/7.55.1', 'Spoofed UA!!'));
+            return Buffer.from(data.toString().replace('curl/7.83.1', 'Spoofed UA!!'));
         }
     });
 
