@@ -159,7 +159,7 @@ class Session extends Object {
                     .on(ERROR, onClose)
             );
 
-            this.setRequestSocket(new tls.TLSSocket(this._dst, {
+            const dstSocket = new tls.TLSSocket(this._dst, {
                     rejectUnauthorized: false,
                     requestCert: false,
                     isServer: false
@@ -167,7 +167,10 @@ class Session extends Object {
                     .on(DATA, onDataFromUpstream)
                     .on(CLOSE, onClose)
                     .on(ERROR, onClose)
-            );
+            // https://github.com/nodejs/node/blob/7f7a899fa5f3b192d4f503f6602f24f7ff4ec57a/lib/_tls_wrap.js#L976
+            // https://github.com/nodejs/node/blob/7f7a899fa5f3b192d4f503f6602f24f7ff4ec57a/lib/_tls_wrap.js#L1675-L1686
+            dstSocket.setServername(this._dst._host);
+            this.setRequestSocket(dstSocket);
             this._updated = true;
         }
         return this;
