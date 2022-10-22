@@ -1,35 +1,20 @@
-const {STRINGS, SLASH, SLASH_REGEXP, HTTP, HTTPS, HTTP_PORT, HTTPS_PORT} = require('../lib/constants');
+const url = require('url');
+const {STRINGS, SLASH, PROTOCOL_REGEXP, HTTP, HTTPS, HTTP_PORT, HTTPS_PORT} = require('../lib/constants');
 
 /**
  * @param ipStringWithPort
  * @returns {{host: string, port: number, protocol: string, credentials: string}}
  */
 function getAddressAndPortFromString(ipStringWithPort) {
-    let [credentials, targetHost] = ipStringWithPort.split(STRINGS.AT);
-
-    if (!targetHost) {
-        targetHost = credentials;
-        credentials = '';
+    if (!PROTOCOL_REGEXP.test(ipStringWithPort)) {
+        ipStringWithPort = STRINGS.PLACEHOLDER_PROTOCOL + SLASH + SLASH + ipStringWithPort;
     }
 
-    let [protocol, host, port] = targetHost.split(STRINGS.SEPARATOR);
-    if (protocol.indexOf(HTTP) === -1) {
-        port = host;
-        host = protocol;
+    let {protocol, hostname, port, auth} = url.parse(ipStringWithPort);
+    if (protocol === STRINGS.PLACEHOLDER_PROTOCOL) {
         protocol = (port && parseInt(port) === HTTPS_PORT)
             ? HTTPS
             : HTTP;
-    }
-
-    host = (host)
-        ? host
-        : protocol.replace(SLASH_REGEXP, STRINGS.EMPTY);
-
-    if (host.indexOf(SLASH + SLASH) === 0) {
-        host = host.split(SLASH)[2];
-    }
-    else {
-        host = host.split(SLASH)[0];
     }
 
     port = port || (protocol && ~protocol.indexOf(HTTPS)
@@ -37,10 +22,10 @@ function getAddressAndPortFromString(ipStringWithPort) {
         : HTTP_PORT);
 
     return JSON.parse(JSON.stringify({
-        host: host,
+        host: hostname,
         port: parseInt(port),
-        protocol: protocol,
-        credentials: credentials || undefined
+        protocol: protocol.replace(STRINGS.SEPARATOR, STRINGS.EMPTY),
+        credentials: auth || undefined
     }));
 }
 
