@@ -138,6 +138,9 @@ class Session extends Object {
 
     /**
      * @param {object} callbacksObject
+     * @param {Function} callbacksObject.onDataFromClient
+     * @param {Function} callbacksObject.onDataFromUpstream
+     * @param {Function} callbacksObject.onClose
      * @param {object} KEYS - {key:{string},cert:{string}}
      * @returns {Session}
      * @private
@@ -147,26 +150,27 @@ class Session extends Object {
         KEYS = KEYS || DEFAULT_KEYS;
 
         if (!this._updated) {
-            this.setResponseSocket(new tls.TLSSocket(this._src, {
-                    rejectUnauthorized: false,
-                    requestCert: false,
-                    isServer: true,
-                    key: KEYS.key,
-                    cert: KEYS.cert
-                })
-                    .on(DATA, onDataFromClient)
-                    .on(CLOSE, onClose)
-                    .on(ERROR, onClose)
-            );
+            const srcSocket = new tls.TLSSocket(this._src, {
+                rejectUnauthorized: false,
+                requestCert: false,
+                isServer: true,
+                key: KEYS.key,
+                cert: KEYS.cert
+            })
+                .on(DATA, onDataFromClient)
+                .on(CLOSE, onClose)
+                .on(ERROR, onClose);
+
+            this.setResponseSocket(srcSocket);
 
             const dstSocket = new tls.TLSSocket(this._dst, {
-                    rejectUnauthorized: false,
-                    requestCert: false,
-                    isServer: false
-                })
-                    .on(DATA, onDataFromUpstream)
-                    .on(CLOSE, onClose)
-                    .on(ERROR, onClose);
+                rejectUnauthorized: false,
+                requestCert: false,
+                isServer: false
+            })
+                .on(DATA, onDataFromUpstream)
+                .on(CLOSE, onClose)
+                .on(ERROR, onClose);
             // https://github.com/nodejs/node/blob/7f7a899fa5f3b192d4f503f6602f24f7ff4ec57a/lib/_tls_wrap.js#L976
             // https://github.com/nodejs/node/blob/7f7a899fa5f3b192d4f503f6602f24f7ff4ec57a/lib/_tls_wrap.js#L1675-L1686
             dstSocket.setServername(this._dst._host);

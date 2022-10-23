@@ -204,7 +204,7 @@ If no object is returned, then [default keys](https://github.com/gr3p1p3/transpa
 
 #### Session-Instance
 
-The Session-Instance is a Object containing info/data about Tunnel.
+The Session-Instance is an Object containing info/data about Tunnel.
 It has following useful attributes/methods:
 
 - isHttps - Is session encrypted.
