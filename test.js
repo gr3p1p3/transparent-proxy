@@ -33,7 +33,7 @@ async function test1() {
 async function test2() {
     console.log('Starting TEST2 - Spoof Response!');
     let ownIp = '';
-    const switchWith = '6.6.6.6';
+    const TO_SWITCH = '6.6.6.6';
     const IP_REGEXP = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
 
     const toTest = ['https://ifconfig.me', 'http://ifconfig.me'];
@@ -56,8 +56,8 @@ async function test2() {
             if (data.toString().match(ownIp)) {
                 const newData = Buffer.from(data.toString()
                     .replace(new RegExp('Content-Length: ' + ownIp.length, 'gmi'),
-                        'Content-Length: ' + (switchWith.length))
-                    .replace(ownIp, switchWith));
+                        'Content-Length: ' + (TO_SWITCH.length))
+                    .replace(ownIp, TO_SWITCH));
 
                 return newData;
             }
@@ -75,6 +75,10 @@ async function test2() {
                 console.log(cmd);
                 const {stdout, stderr} = await exec(cmd);
                 console.log('Response =>', stdout);
+                if (stdout !== TO_SWITCH) {
+                    console.error('Response must be', TO_SWITCH);
+                    process.exit(2);
+                }
             }
 
             console.log('Closing transparent-proxy Server - TEST2\n');
@@ -89,6 +93,8 @@ async function test3() {
 
     const toTest = ['http://ifconfig.io/ua', 'https://ifconfig.me/ua'];
 
+    const USER_AGENT = 'curl/7.83.1';
+    const TO_SWITCH = 'Spoofed UA!!';
     const PORT = 10003; //starting server on port 10001
 
     console.log('Starting Proxy Server with spoof-behaviors');
@@ -97,7 +103,7 @@ async function test3() {
         verbose: true,
         intercept: true,
         injectData: (data, session) => {
-            return Buffer.from(data.toString().replace('curl/7.83.1', 'Spoofed UA!!'));
+            return Buffer.from(data.toString().replace(USER_AGENT, TO_SWITCH));
         }
     });
 
@@ -110,6 +116,10 @@ async function test3() {
                 console.log(cmd);
                 const {stdout, stderr} = await exec(cmd);
                 console.log('Response =>', stdout);
+                if (stdout.trim() !== TO_SWITCH) {
+                    console.error('Response must be', TO_SWITCH);
+                    process.exit(3);
+                }
             }
 
             console.log('Closing transparent-proxy Server - TEST3\n');
@@ -184,6 +194,18 @@ async function test5() {
                         throw err;
                     });
                 console.log('Response =>', stdout);
+
+                if (pwd === pwdToTest[0]
+                    && stdout === 'HTTP CODE 407') {
+                    console.error('Response must not be', 'HTTP CODE 407');
+                    process.exit(5);
+                }
+
+                if (pwd === pwdToTest[1]
+                    && stdout !== 'HTTP CODE 407') {
+                    console.error('Response must be', 'HTTP CODE 407');
+                    process.exit(5);
+                }
             }
 
             console.log('Closing transparent-proxy Server - TEST5\n');

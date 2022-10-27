@@ -1,5 +1,6 @@
 const tls = require('tls');
 const {EVENTS, DEFAULT_KEYS} = require('../lib/constants');
+const parseDataToObject = require('../lib/parseDataToObject');
 const {CLOSE, DATA, ERROR} = EVENTS;
 
 /**
@@ -38,6 +39,8 @@ class Session extends Object {
         this.user = null;
         this.authenticated = false;
         this.isHttps = false;
+        this._request = {};
+        this._response = {};
     }
 
     /**
@@ -106,6 +109,32 @@ class Session extends Object {
      */
     getId() {
         return this._id;
+    }
+
+    set request(buffer) {
+        const parsedRequest = parseDataToObject(buffer);
+        if (parsedRequest.headers) {
+            this._request = parsedRequest;
+        }
+        return this._request;
+    }
+
+    get request() {
+        return this._request;
+    }
+
+    set response(buffer) {
+        const parsedResponse = parseDataToObject(buffer, true, !!this._response.body);
+        if (this._response.body
+            && parsedResponse.body) {
+            parsedResponse.body = this._response.body + parsedResponse.body;
+        }
+        this._response = {...this._response, ...parsedResponse};
+        return this._response;
+    }
+
+    get response() {
+        return this._response;
     }
 
     /**

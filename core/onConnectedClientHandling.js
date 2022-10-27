@@ -2,7 +2,6 @@ const net = require('net');
 
 const Session = require('./Session');
 const getConnectionOptions = require('./getConnectionOptions');
-const parseHeaders = require('../lib/parseHeaders');
 const rebuildHeaders = require('../lib/rebuildHeaders');
 const isFunction = require('../lib/isFunction');
 const usingUpstreamToProxy = require('../lib/usingUpstreamToProxy');
@@ -78,6 +77,8 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
      */
     function onDataFromUpstream(dataFromUpStream) {
         const thisTunnel = bridgedConnections[remoteID];
+        thisTunnel.response = dataFromUpStream;
+
         const responseData = isFunction(injectResponse)
             ? injectResponse(dataFromUpStream, thisTunnel)
             : dataFromUpStream;
@@ -92,6 +93,8 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
      */
     function onDirectConnectionOpen(srcData) {
         const thisTunnel = bridgedConnections[remoteID];
+        thisTunnel.request = srcData;
+
         const requestData = isFunction(injectData)
             ? injectData(srcData, thisTunnel)
             : srcData;
@@ -154,7 +157,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
             }
 
             if (connectionOpt.credentials) {
-                const headers = parseHeaders(data);
+                const headers = thisTunnel.request.headers;
                 const basedCredentials = Buffer.from(connectionOpt.credentials)
                     .toString('base64'); //converting to base64
                 headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
@@ -176,7 +179,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
             }
             if (connectionOpt.upstreamed) {
                 if (connectionOpt.credentials) {
-                    const headers = parseHeaders(data);
+                    const headers = thisTunnel.request.headers;
                     const basedCredentials = Buffer.from(connectionOpt.credentials).toString('base64'); //converting to base64
                     headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
                     const newData = rebuildHeaders(headers, data);
@@ -201,7 +204,6 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
             logger.log(remoteID, '=>', thisTunnel.getTunnelStats());
 
             const responseSocket = net.createConnection(connectionOpt, callbackOnConnect);
-
             thisTunnel.setRequestSocket(responseSocket
                 .on(DATA, onDataFromUpstream)
                 .on(CLOSE, onClose)
@@ -236,13 +238,15 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
      * @returns {Promise<Session|void>}
      */
     async function onDataFromClient(data) {
-        const dataString = data.toString();
         const thisTunnel = bridgedConnections[remoteID];
+        thisTunnel.request = data;
+
+        const dataString = data.toString();
 
         try {
             if (dataString && dataString.length > 0) {
-                const headers = parseHeaders(data);
-                const split = dataString.split(CLRF); //TODO make secure, split can be limited
+                const headers = thisTunnel.request.headers;
+                const split = dataString.split(CLRF);
 
                 if (isFunction(auth)
                     && !thisTunnel.isAuthenticated()) {
@@ -253,7 +257,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
 
                         const parsedCredentials = Buffer.from(credentials, 'base64')
                             .toString(); //converting from base64
-                        const [username, password] = parsedCredentials.split(SEPARATOR); //TODO split can be limited
+                        const [username, password] = parsedCredentials.split(SEPARATOR, 2); // TODO split only once
                         let isLogged = auth(username, password, thisTunnel);
 
                         if (isLogged instanceof Promise) { //if async operation...
