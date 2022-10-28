@@ -1,7 +1,8 @@
 const tls = require('tls');
-const {EVENTS, DEFAULT_KEYS} = require('../lib/constants');
+const {EVENTS, DEFAULT_KEYS, STRINGS} = require('../lib/constants');
 const parseDataToObject = require('../lib/parseDataToObject');
 const {CLOSE, DATA, ERROR} = EVENTS;
+const {BLANK, CRLF, LF, SEPARATOR} = STRINGS;
 
 /**
  * Write data of given socket
@@ -124,12 +125,16 @@ class Session extends Object {
     }
 
     set response(buffer) {
+        // const indexOfChunkEnd = buffer.toString().indexOf(LF + CRLF + CRLF);
+        // this._response.complete = indexOfChunkEnd; //TODO find a way to recognize last chunk
+
         const parsedResponse = parseDataToObject(buffer, true, !!this._response.body);
         if (this._response.body
             && parsedResponse.body) {
             parsedResponse.body = this._response.body + parsedResponse.body;
         }
         this._response = {...this._response, ...parsedResponse};
+
         return this._response;
     }
 

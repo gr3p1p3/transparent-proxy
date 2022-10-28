@@ -204,14 +204,15 @@ If no object is returned, then [default keys](https://github.com/gr3p1p3/transpa
 #### Session-Instance
 
 The Session-Instance is an Object containing info/data about Tunnel.
-It has following useful attributes/methods:
+It has following useful attributes and methods:
 
 - isHttps - Is session encrypted.
+- request - The Request-Object containing info about current request.
+- response - The Response-Object containing info about current response.
+
 - getTunnelStats() - Get Stats for this tunnel
 - getId() - Get Own ID-Session
 - isAuthenticated() - Is the session authenticated by user or not.
-- request - The Request-Object containing info about current request.
-- response - The Response-Object containing info about current response.
 
 
 ## .getBridgedConnections()

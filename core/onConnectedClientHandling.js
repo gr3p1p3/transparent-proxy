@@ -16,8 +16,8 @@ const {CLOSE, DATA, ERROR, EXIT} = EVENTS;
 const {ETIMEDOUT, ENOTFOUND, EPIPE, EPROTO} = ERROR_CODES;
 const {CONNECT} = HTTP_METHODS;
 const {AUTH_REQUIRED, OK, NOT_OK, TIMED_OUT, NOT_FOUND} = HTTP_RESPONSES;
-const {BLANK, CLRF, EMPTY, SEPARATOR, PROXY_AUTH, PROXY_AUTH_BASIC} = STRINGS;
-const DOUBLE_CLRF = CLRF + CLRF;
+const {BLANK, CRLF, EMPTY, SEPARATOR, PROXY_AUTH, PROXY_AUTH_BASIC} = STRINGS;
+const DOUBLE_CLRF = CRLF + CRLF;
 
 /**
  *
@@ -191,7 +191,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
             }
             else {
                 // response as normal http-proxy
-                thisTunnel.clientResponseWrite(OK + CLRF + CLRF);
+                thisTunnel.clientResponseWrite(OK + CRLF + CRLF);
                 updateSockets();
             }
         }
@@ -246,7 +246,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         try {
             if (dataString && dataString.length > 0) {
                 const headers = thisTunnel.request.headers;
-                const split = dataString.split(CLRF);
+                const split = dataString.split(CRLF);
 
                 if (isFunction(auth)
                     && !thisTunnel.isAuthenticated()) {
