@@ -125,7 +125,7 @@ class Session extends Object {
     }
 
     set response(buffer) {
-        // const indexOfChunkEnd = buffer.toString().indexOf(LF + CRLF + CRLF);
+        // const indexOfChunkEnd = buffer.toString().indexOf(LF + CRLF);
         // this._response.complete = indexOfChunkEnd; //TODO find a way to recognize last chunk
 
         const parsedResponse = parseDataToObject(buffer, true, !!this._response.body);
