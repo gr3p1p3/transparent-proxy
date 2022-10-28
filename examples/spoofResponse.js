@@ -4,22 +4,21 @@ const exec = util.promisify(require('child_process').exec);
 
 const toTest = ['http://v4.ident.me/', 'https://v4.ident.me/'];
 
-const ipToSwitch = 'x.x.x.x';
-const switchWith = 'bla.bla.bla.bla';
+const switchWithIp = 'bla.bla.bla.bla';
 
 const server = new ProxyServer({
     verbose: true,
     injectResponse: (data, session) => {
-        if (!session.isHttps) {
+        if (!session.isHttps && session.response.body) {
             //you can spoof here
-            if (session.response.body) {
-                const newData = Buffer.from(data.toString()
-                    .replace(new RegExp('Content-Length: ' + session.response.headers['content-length'], 'gmi'),
-                        'Content-Length: ' + (switchWith.length))
-                    .replace(session.response.body.trim(), switchWith));
+            const modifiedData = data.toString()
+                .replace(new RegExp(    //overwriting content-length-header for a valid response
+                    'Content-Length: ' + session.response.headers['content-length'], 'gmi'),
+                    'Content-Length: ' + (switchWithIp.length)
+                )
+                .replace(session.response.body.trim(), switchWithIp);
 
-                return newData;
-            }
+            return Buffer.from(modifiedData);
         }
         return data;
     }

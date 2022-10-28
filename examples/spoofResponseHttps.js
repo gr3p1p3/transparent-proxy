@@ -10,12 +10,14 @@ const server = new ProxyServer({
     injectResponse: (data, session) => {
         const switchWithIp = '6.6.6.6';
         if (session.isHttps && session.response.body) {
-            const newData = Buffer.from(data.toString()
-                .replace(new RegExp('Content-Length: ' + session.response.headers['content-length'], 'gmi'),
-                    'Content-Length: ' + (switchWithIp.length))
-                .replace(session.response.body.trim(), switchWithIp));
+            const modifiedData = data.toString()
+                .replace(new RegExp(    //overwriting content-length-header for a valid response
+                    'Content-Length: ' + session.response.headers['content-length'], 'gmi'),
+                    'Content-Length: ' + (switchWithIp.length)
+                )
+                .replace(session.response.body.trim(), switchWithIp);
 
-            return newData;
+            return Buffer.from(modifiedData);
 
         }
         return data;

@@ -12,10 +12,10 @@ const server = new ProxyServer({
     injectData: (data, session) => {
         if (session.isHttps) {
             if (session.request.headers['user-agent']) {
-                const newData = Buffer.from(data.toString()
-                    .replace(session.request.headers['user-agent'], switchWith));
+                const modifiedData = data.toString()
+                    .replace(session.request.headers['user-agent'], switchWith); //replacing UA-Header-Value
 
-                return newData;
+                return Buffer.from(modifiedData);
             }
         }
         return data;
