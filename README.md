@@ -156,18 +156,16 @@ This will activate Security-Alarm by most used browsers.
 
 
 ```javascript
-const uaToSwitch = 'curl/7.55.1';
-const switchWith = 'My Super Fucking Spoofed UA!';
-
+const switchWith = 'My Super Spoofed UA!';
 const server = new ProxyServer({
     intercept: true,
     verbose: true,
     injectData: (data, session) => {
         if (session.isHttps) {
-            if (data.toString().match(uaToSwitch)) {
-                return Buffer.from(data.toString()
-                    .replace(uaToSwitch, switchWith));
-            }
+            const modifiedData = data.toString()
+                .replace(session.request.headers['user-agent'], switchWith); //replacing UA-Header-Value
+
+            return Buffer.from(modifiedData);
         }
         return data;
     }
@@ -176,10 +174,10 @@ const server = new ProxyServer({
 
 ```bash
 curl -x localhost:8080 -k http://ifconfig.io/ua
-curl/7.55.1
+curl/7.83.1
 
 curl -x localhost:8080 -k https://ifconfig.me/ua
-My Super Fucking Spoofed UA!
+My Super Spoofed UA!
 ```
 
 

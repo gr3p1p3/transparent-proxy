@@ -4,19 +4,16 @@ const exec = util.promisify(require('child_process').exec);
 
 const toTest = ['http://ifconfig.io/ua', 'https://ifconfig.me/ua'];
 
-const switchWith = 'My Super Fucking Spoofed UA!';
-
+const switchWith = 'My Super Spoofed UA!';
 const server = new ProxyServer({
     intercept: true,
     verbose: true,
     injectData: (data, session) => {
         if (session.isHttps) {
-            if (session.request.headers['user-agent']) {
-                const modifiedData = data.toString()
-                    .replace(session.request.headers['user-agent'], switchWith); //replacing UA-Header-Value
+            const modifiedData = data.toString()
+                .replace(session.request.headers['user-agent'], switchWith); //replacing UA-Header-Value
 
-                return Buffer.from(modifiedData);
-            }
+            return Buffer.from(modifiedData);
         }
         return data;
     }
