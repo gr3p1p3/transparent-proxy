@@ -8,15 +8,15 @@ const server = new ProxyServer({
     intercept: true,
     verbose: true,
     injectResponse: (data, session) => {
-        const ipToSwitch = 'x.x.x.x';
         const switchWithIp = '6.6.6.6';
-        // console.log('session.isHttps', session.isHttps)
-        if (session.isHttps) {
+        if (session.isHttps && session.response.body) {
             const newData = Buffer.from(data.toString()
-                .replace(new RegExp('Content-Length: ' + ipToSwitch.length, 'gmi'),
+                .replace(new RegExp('Content-Length: ' + session.response.headers['content-length'], 'gmi'),
                     'Content-Length: ' + (switchWithIp.length))
-                .replace(ipToSwitch, switchWithIp));
+                .replace(session.response.body.trim(), switchWithIp));
+
             return newData;
+
         }
         return data;
     }

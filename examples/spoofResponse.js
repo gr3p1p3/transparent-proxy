@@ -12,11 +12,11 @@ const server = new ProxyServer({
     injectResponse: (data, session) => {
         if (!session.isHttps) {
             //you can spoof here
-            if (data.toString().match(ipToSwitch)) {
+            if (session.response.body) {
                 const newData = Buffer.from(data.toString()
-                    .replace(new RegExp('Content-Length: ' + ipToSwitch.length, 'gmi'),
+                    .replace(new RegExp('Content-Length: ' + session.response.headers['content-length'], 'gmi'),
                         'Content-Length: ' + (switchWith.length))
-                    .replace(ipToSwitch, switchWith));
+                    .replace(session.response.body.trim(), switchWith));
 
                 return newData;
             }
