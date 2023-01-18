@@ -93,7 +93,7 @@ async function test3() {
 
     const toTest = ['http://ifconfig.io/ua', 'https://ifconfig.me/ua'];
 
-    const USER_AGENT = 'curl/7.83.1';
+    const USER_AGENT = /curl\/.+/;
     const TO_SWITCH = 'Spoofed UA!!';
     const PORT = 10003; //starting server on port 10001
 
