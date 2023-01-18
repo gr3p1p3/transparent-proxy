@@ -91,12 +91,12 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
     /**
      * @param {buffer} srcData
      */
-    function onDirectConnectionOpen(srcData) {
+    async function onDirectConnectionOpen(srcData) {
         const thisTunnel = bridgedConnections[remoteID];
         thisTunnel.request = srcData;
 
         const requestData = isFunction(injectData)
-            ? injectData(srcData, thisTunnel)
+            ? await injectData(srcData, thisTunnel)
             : srcData;
 
         thisTunnel.clientRequestWrite(requestData);
