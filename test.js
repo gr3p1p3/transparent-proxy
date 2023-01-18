@@ -215,12 +215,62 @@ async function test5() {
     });
 }
 
+async function test6() {
+    console.log('Starting TEST6 - async inject data');
+
+    const toTest = ['http://httpbin.org/headers', 'http://httpbin.org/headers'];
+
+    const ADDED_HEADER = "x-test: my async value";
+    const PORT = 10006; 
+
+    console.log('Starting Proxy Server with spoof-behaviors');
+
+    const getHeader = async () => 
+        new Promise((resolve) => setTimeout(() => resolve(ADDED_HEADER), 500));
+
+    //init ProxyServer
+    const server = new ProxyServer({
+        verbose: true,
+        intercept: true,
+        injectData: async (data, session) => {
+            const requestLines = data.toString().split("\r\n");
+            // add the new header after the request line
+            requestLines.splice(2, 0, `${await getHeader()}`);
+            return requestLines.join("\r\n");
+        }
+    });
+
+    return new Promise(function (res, rej) {
+        server.listen(PORT, '0.0.0.0', async function () {
+            console.log('transparent-proxy was started!', server.address());
+
+            for (const singlePath of toTest) {
+                const cmd = 'curl' + ' -x 127.0.0.1:' + PORT + ' -k ' + singlePath;
+                console.log(cmd);
+                const {stdout, stderr} = await exec(cmd);
+                console.log('Response =>', stdout);
+                if (JSON.parse(stdout).headers['X-Test'] !== "my async value") {
+                    console.error(`Header ${ADDED_HEADER} must have been sent`);
+                    process.exit(3);
+                }
+            }
+
+            console.log('Closing transparent-proxy Server - TEST6\n');
+            server.close();
+            res(true);
+        });
+    })
+}
+
 async function main() {
-    await test1();
-    await test2();
-    await test3();
-    await test4();
-    await test5();
+    await Promise.all([
+         test1(),
+         test2(),
+         test3(),
+         test4(),
+         test5(),
+         test6(),
+    ])
 }
 
 return main();
