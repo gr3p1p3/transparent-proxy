@@ -49,10 +49,14 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
             //TODO handle more the errorCodes
             switch (err.code) {
                 case ETIMEDOUT:
-                    thisTunnel.clientResponseWrite(TIMED_OUT + DOUBLE_CLRF);
+                    if (thisTunnel) {
+                        thisTunnel.clientResponseWrite(TIMED_OUT + DOUBLE_CLRF);
+                    }
                     break;
                 case ENOTFOUND:
-                    thisTunnel.clientResponseWrite(NOT_FOUND + DOUBLE_CLRF + HTTP_BODIES.NOT_FOUND);
+                    if (thisTunnel) {
+                        thisTunnel.clientResponseWrite(NOT_FOUND + DOUBLE_CLRF + HTTP_BODIES.NOT_FOUND);
+                    }
                     break;
                 case EPIPE:
                     logger.error(remoteID, err);
@@ -63,7 +67,9 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
                 default:
                     //log all unhandled errors
                     logger.error(remoteID, err);
-                    thisTunnel.clientResponseWrite(NOT_OK + DOUBLE_CLRF);
+                    if (thisTunnel) {
+                        thisTunnel.clientResponseWrite(NOT_OK + DOUBLE_CLRF);
+                    }
             }
         }
         if (thisTunnel) {
@@ -75,31 +81,35 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
     /**
      * @param {buffer} dataFromUpStream
      */
-    function onDataFromUpstream(dataFromUpStream) {
+    async function onDataFromUpstream(dataFromUpStream) {
         const thisTunnel = bridgedConnections[remoteID];
-        thisTunnel.response = dataFromUpStream;
+        if (thisTunnel) {
+            thisTunnel.response = dataFromUpStream;
 
-        const responseData = isFunction(injectResponse)
-            ? injectResponse(dataFromUpStream, thisTunnel)
-            : dataFromUpStream;
+            const responseData = isFunction(injectResponse)
+                ? await injectResponse(dataFromUpStream, thisTunnel)
+                : dataFromUpStream;
 
-        thisTunnel.clientResponseWrite(responseData);
-        //updateSockets if needed after first response
-        updateSockets();
+            thisTunnel.clientResponseWrite(responseData);
+            //updateSockets if needed after first response
+            updateSockets();
+        }
     }
 
     /**
      * @param {buffer} srcData
      */
-    function onDirectConnectionOpen(srcData) {
+    async function onDirectConnectionOpen(srcData) {
         const thisTunnel = bridgedConnections[remoteID];
-        thisTunnel.request = srcData;
+        if (thisTunnel) {
+            thisTunnel.request = srcData;
 
-        const requestData = isFunction(injectData)
-            ? injectData(srcData, thisTunnel)
-            : srcData;
+            const requestData = isFunction(injectData)
+                ? await injectData(srcData, thisTunnel)
+                : srcData;
 
-        thisTunnel.clientRequestWrite(requestData);
+            thisTunnel.clientRequestWrite(requestData);
+        }
     }
 
     function updateSockets() {
