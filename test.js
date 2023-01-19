@@ -216,16 +216,16 @@ async function test5() {
 }
 
 async function test6() {
-    console.log('Starting TEST6 - async inject data');
+    console.log('Starting TEST6 - Async inject data');
 
     const toTest = ['http://httpbin.org/headers', 'http://httpbin.org/headers'];
 
     const ADDED_HEADER = "x-test: my async value";
-    const PORT = 10006; 
+    const PORT = 10006;
 
     console.log('Starting Proxy Server with spoof-behaviors');
 
-    const getHeader = async () => 
+    const getHeader = async () =>
         new Promise((resolve) => setTimeout(() => resolve(ADDED_HEADER), 250));
 
     //init ProxyServer
@@ -236,7 +236,7 @@ async function test6() {
             const requestLines = data.toString().split("\r\n");
             // add the new header after the request line
             requestLines.splice(2, 0, `${await getHeader()}`);
-            return requestLines.join("\r\n");
+            return requestLines.join('\r\n');
         }
     });
 
@@ -251,7 +251,7 @@ async function test6() {
                 console.log('Response =>', stdout);
                 if (JSON.parse(stdout).headers['X-Test'] !== "my async value") {
                     console.error(`Header ${ADDED_HEADER} must have been sent`);
-                    process.exit(3);
+                    process.exit(6);
                 }
             }
 
@@ -264,12 +264,12 @@ async function test6() {
 
 async function main() {
     await Promise.all([
-         test1(),
-         test2(),
-         test3(),
-         test4(),
-         test5(),
-         test6(),
+        test1(),
+        test2(),
+        test3(),
+        test4(),
+        test5(),
+        test6(),
     ])
 }
 
