@@ -2,3 +2,6 @@
 .idea
 tests
 tests/*
+node_modules 
+package-lock.json
+.vscode
