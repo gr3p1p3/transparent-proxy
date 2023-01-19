@@ -226,7 +226,7 @@ async function test6() {
     console.log('Starting Proxy Server with spoof-behaviors');
 
     const getHeader = async () => 
-        new Promise((resolve) => setTimeout(() => resolve(ADDED_HEADER), 500));
+        new Promise((resolve) => setTimeout(() => resolve(ADDED_HEADER), 250));
 
     //init ProxyServer
     const server = new ProxyServer({
