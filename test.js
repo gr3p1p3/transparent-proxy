@@ -263,14 +263,13 @@ async function test6() {
 }
 
 async function main() {
-    await Promise.all([
-        test1(),
-        test2(),
-        test3(),
-        test4(),
-        test5(),
-        test6(),
-    ])
+    await test1();
+    await test2();
+    await test3();
+    await test4();
+    await test5();
+    await test6();
+
 }
 
 return main();
