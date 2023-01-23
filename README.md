@@ -47,6 +47,7 @@ server.listen(8080, '0.0.0.0', function () {
 |[options.keys] | <code>Function</code> |  The keys to use while handshake. It will work only if intercept is true. Returns Object or false |
 |[options.verbose] | <code>Boolean</code> |  Activate verbose mode. |
 |[options.intercept] | <code>Boolean</code> |  Activate interception of encrypted communications. False as default. |
+|[options.logger] | <code>Logger</code> |  Must be an object implementing `log(args[])` and `error(args[])`. Defaults to the [inbuilt logger](./lib/Logger.js) writing to the console if `verbose` is true.|
 
 
 

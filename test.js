@@ -262,6 +262,53 @@ async function test6() {
     })
 }
 
+async function test7() {
+    console.log('Starting TEST7 - Custom Logger');
+
+    const toTest = ['http://ifconfig.io/ua', 'https://ifconfig.me/ua'];
+
+    const PORT = 10007;
+
+    console.log('Starting Proxy Server with custom logger');
+    let logs = []
+    const loggerStub =  {
+        log(args) {
+            logs.push(args)
+        },
+        
+        error(args) {
+            logs.push(args)
+        }
+    }
+
+    //init ProxyServer
+    const server = new ProxyServer({
+        verbose: true,
+        logger: loggerStub,
+    });
+
+    return new Promise(function (res, rej) {
+        server.listen(PORT, '0.0.0.0', async function () {
+            console.log('transparent-proxy was started!', server.address());
+
+            for (const singlePath of toTest) {
+                const cmd = 'curl' + ' -x 127.0.0.1:' + PORT + ' -k ' + singlePath;
+                logs = []
+                await exec(cmd);
+   
+                if (!logs.length) {
+                    console.error(`Url should have been written to logs`, logs);
+                    process.exit(7);
+                }
+            }
+
+            console.log('Closing transparent-proxy Server - TEST7\n');
+            server.close();
+            res(true);
+        });
+    })
+}
+
 async function main() {
     await test1();
     await test2();
@@ -269,6 +316,7 @@ async function main() {
     await test4();
     await test5();
     await test6();
+    await test7();
 
 }
 
