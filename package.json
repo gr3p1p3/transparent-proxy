@@ -5,8 +5,8 @@
   "main": "ProxyServer.js",
   "scripts": {
     "build": "tsc",
-    "test": "ts-node test/index.ts exit 0",
-    "test:unit": "jest",
+    "test:e2e": "ts-node test/index.ts exit 0",
+    "test": "jest",
     "mock-server": "ts-node test/setup.ts",
     "prepublish": "yarn test"
   },
