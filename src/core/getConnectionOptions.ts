@@ -1,30 +1,31 @@
-const url = require('url');
-const {STRINGS, SLASH, PROTOCOL_REGEXP, HTTP, HTTPS, HTTP_PORT, HTTPS_PORT} = require('../lib/constants');
+import url  from 'url';
+import { CONSTANTS } from '../lib/constants';
+const {STRINGS, SLASH, PROTOCOL_REGEXP, HTTP, HTTPS, HTTP_PORT, HTTPS_PORT} = CONSTANTS
 
 /**
  * @param ipStringWithPort
  * @returns {{host: string, port: number, protocol: string, credentials: string}}
  */
-function getAddressAndPortFromString(ipStringWithPort) {
+function getAddressAndPortFromString(ipStringWithPort: string) {
     if (!PROTOCOL_REGEXP.test(ipStringWithPort)) {
         ipStringWithPort = STRINGS.PLACEHOLDER_PROTOCOL + SLASH + SLASH + ipStringWithPort;
     }
 
     let {protocol, hostname, port, auth} = url.parse(ipStringWithPort);
     if (protocol === STRINGS.PLACEHOLDER_PROTOCOL) {
-        protocol = (port && parseInt(port) === HTTPS_PORT)
+        protocol = (port && port === HTTPS_PORT.toString())
             ? HTTPS
             : HTTP;
     }
 
     port = port || (protocol && ~protocol.indexOf(HTTPS)
-        ? HTTPS_PORT
-        : HTTP_PORT);
+        ? HTTPS_PORT.toString()
+        : HTTP_PORT.toString());
 
     return JSON.parse(JSON.stringify({
         host: hostname,
         port: parseInt(port),
-        protocol: protocol.replace(STRINGS.SEPARATOR, STRINGS.EMPTY),
+        protocol: protocol?.replace(STRINGS.SEPARATOR, STRINGS.EMPTY),
         credentials: auth || undefined
     }));
 }
@@ -35,8 +36,8 @@ function getAddressAndPortFromString(ipStringWithPort) {
  * @param upstreamHost
  * @returns {boolean|{host: string, port: number, protocol: string, credentials: string, upstreamed:boolean}}
  */
-module.exports = function getConnectionOptions(proxyToUse, upstreamHost) {
-    const isValid = require('../lib/isValidASCII');
+export function getConnectionOptions(proxyToUse: string | false, upstreamHost: string) {
+    const isValid = require('../src/lib/isValidASCII');
     if (isValid(upstreamHost)) {
         const upstreamed = !!proxyToUse;
         const upstreamToUse = (upstreamed)

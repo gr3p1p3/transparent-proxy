@@ -1,6 +1,5 @@
-const {STRINGS} = require('./constants');
-const {BLANK, CRLF, SEPARATOR} = STRINGS;
-const DOUBLE_CRLF = CRLF + CRLF;
+import {CONSTANTS} from "./constants";
+const {BLANK, CRLF, SEPARATOR, DOUBLE_CRLF} = CONSTANTS.STRINGS;
 
 /**
  *
@@ -8,7 +7,7 @@ const DOUBLE_CRLF = CRLF + CRLF;
  * @param {buffer} dataBuffer
  * @returns {buffer}
  */
-module.exports = function rebuildHeaders(headersObject, dataBuffer) {
+export function rebuildHeaders(headersObject: {[key: string]: string}, dataBuffer: Buffer) {
     const dataString = dataBuffer.toString();
     const [headers, body] = dataString.split(DOUBLE_CRLF + CRLF, 2);
     const firstRow = headers.split(CRLF, 1)[0];

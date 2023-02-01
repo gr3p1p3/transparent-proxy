@@ -1,6 +1,8 @@
-const util = require('util');
-const exec = util.promisify(require('child_process').exec);
-const ProxyServer = require('./ProxyServer');
+import util from 'util';
+import child_process from 'child_process';
+import { Session } from '../src/core';
+const exec = util.promisify(child_process.exec);
+import { ProxyServer } from '../src/ProxyServer';
 
 async function test1() {
     console.log('Starting TEST1 - Normal Transparent-Proxy!');
@@ -43,7 +45,7 @@ async function test2() {
     const cmdOwnIp = 'curl ' + toTest[0];
     console.log('Getting Own ip with', cmdOwnIp);
     const {stdout, stderr} = await exec(cmdOwnIp);
-    ownIp = stdout.match(IP_REGEXP)[0].trim();
+    ownIp = stdout?.match(IP_REGEXP)?.[0].trim() || '';
     console.log('Your IP is:', ownIp);
 
     console.log('Starting Proxy Server with spoof-behaviors');
@@ -51,7 +53,7 @@ async function test2() {
     const server = new ProxyServer({
         verbose: true,
         intercept: true,
-        injectResponse: (data, session) => {
+        injectResponse: (data: Buffer, session: Session) => {
             //SPOOFING RETURNED RESPONSE
             if (data.toString().match(ownIp)) {
                 const newData = Buffer.from(data.toString()
@@ -102,7 +104,7 @@ async function test3() {
     const server = new ProxyServer({
         verbose: true,
         intercept: true,
-        injectData: (data, session) => {
+        injectData: (data:Buffer, session:Session) => {
             return Buffer.from(data.toString().replace(USER_AGENT, TO_SWITCH));
         }
     });
@@ -140,7 +142,7 @@ async function test4() {
     const server = new ProxyServer({
         verbose: true,
         intercept: true,
-        keys: (session) => {
+        keys: (session: Session) => {
             const tunnel = session.getTunnelStats();
             console.log('\t\t=> Could change keys for', tunnel);
             return false;
@@ -176,7 +178,7 @@ async function test5() {
     //init ProxyServer
     const server = new ProxyServer({
         verbose: true,
-        auth: (username, password, session) => {
+        auth: (username: string, password: string, session: Session) => {
             return username === 'bar' && password === 'foo';
         }
     });
@@ -188,7 +190,7 @@ async function test5() {
             for (const pwd of pwdToTest) {
                 const cmd = 'curl' + ' -x ' + pwd + '@127.0.0.1:' + PORT + ' ' + singlePath;
                 console.log(cmd);
-                const {stdout, stderr} = await exec(cmd)
+                const {stdout} = await exec(cmd)
                     .catch((err) => {
                         if (err.message.indexOf('HTTP code 407')) return {stdout: 'HTTP CODE 407'};
                         throw err;
@@ -232,7 +234,7 @@ async function test6() {
     const server = new ProxyServer({
         verbose: true,
         intercept: true,
-        injectData: async (data, session) => {
+        injectData: async (data: Buffer, session: Session) => {
             const requestLines = data.toString().split("\r\n");
             // add the new header after the request line
             requestLines.splice(2, 0, `${await getHeader()}`);
@@ -272,4 +274,4 @@ async function main() {
 
 }
 
-return main();
+main();

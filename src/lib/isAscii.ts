@@ -1,4 +1,4 @@
-module.exports = function isValid(str) {
+export function isAscii(str: any) {
     if (typeof (str) !== 'string') {
         return false;
     }

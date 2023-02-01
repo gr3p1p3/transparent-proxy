@@ -1,4 +1,4 @@
-module.exports = {
+export const CONSTANTS = {
     DEFAULT_OPTIONS: {
         upstream: false,
         tcpOutgoingAddress: false,
@@ -44,6 +44,7 @@ module.exports = {
         AT: '@',
         BLANK: ' ',
         CRLF: '\r\n',
+        DOUBLE_CRLF: '\r\n\r\n',
         EMPTY: '',
         LF: '\n',
         SEPARATOR: ':',
