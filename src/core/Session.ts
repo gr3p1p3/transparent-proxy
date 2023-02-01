@@ -32,7 +32,7 @@ type Callbacks = {
   onDataFromUpstream: (...args: any[]) => void; // ses net.Socket.on
   onClose: (...args: any[]) => void; // ses net.Socket.on
 };
-export class Session extends Object {
+export class Session {
   private _id: string;
   private _src: Socket | null;
   private _dst: Socket | null;
@@ -45,8 +45,6 @@ export class Session extends Object {
   private _response: Buffer | undefined;
 
   constructor(id: string) {
-    super();
-
     this._id = id;
     this._src = null;
     this._dst = null;
@@ -224,5 +222,3 @@ export class Session extends Object {
     return this._dst;
   }
 }
-
-module.exports = Session;

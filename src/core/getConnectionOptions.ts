@@ -1,5 +1,5 @@
 import url  from 'url';
-import { CONSTANTS } from '../lib/constants';
+import {isAscii, CONSTANTS} from '../lib'
 const {STRINGS, SLASH, PROTOCOL_REGEXP, HTTP, HTTPS, HTTP_PORT, HTTPS_PORT} = CONSTANTS
 
 /**
@@ -37,8 +37,7 @@ function getAddressAndPortFromString(ipStringWithPort: string) {
  * @returns {boolean|{host: string, port: number, protocol: string, credentials: string, upstreamed:boolean}}
  */
 export function getConnectionOptions(proxyToUse: string | false, upstreamHost: string) {
-    const isValid = require('../src/lib/isValidASCII');
-    if (isValid(upstreamHost)) {
+    if (isAscii(upstreamHost)) {
         const upstreamed = !!proxyToUse;
         const upstreamToUse = (upstreamed)
             ? proxyToUse

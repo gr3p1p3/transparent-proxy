@@ -1,8 +1,8 @@
 import util from 'util';
 import child_process from 'child_process';
 import { Session } from '../src/core';
-const exec = util.promisify(child_process.exec);
 import { ProxyServer } from '../src/ProxyServer';
+const exec = util.promisify(child_process.exec);
 
 async function test1() {
     console.log('Starting TEST1 - Normal Transparent-Proxy!');

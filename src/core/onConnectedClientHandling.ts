@@ -72,7 +72,7 @@ export function onConnectedClientHandling(
    */
   function onClose(err?: Error | ProxyError) {
     const thisTunnel = bridgedConnections[remoteID];
-    if (err && "code" in err) {
+    if (err && typeof err === "object" &&"code" in err) {
       //TODO handle more the errorCodes
       switch (err.code) {
         case ETIMEDOUT:
