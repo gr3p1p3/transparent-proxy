@@ -175,21 +175,25 @@ class Session extends Object {
      * @param {Function} callbacksObject.onDataFromClient
      * @param {Function} callbacksObject.onDataFromUpstream
      * @param {Function} callbacksObject.onClose
+     * @param {Function} callbacksObject.handleSni
      * @param {object} KEYS - {key:{string},cert:{string}}
      * @returns {Session}
      * @private
      */
     _updateSockets(callbacksObject, KEYS = DEFAULT_KEYS) {
-        const {onDataFromClient, onDataFromUpstream, onClose} = callbacksObject;
-        KEYS = KEYS || DEFAULT_KEYS;
+        const { onDataFromClient, onDataFromUpstream, onClose, handleSni } =
+            callbacksObject;
 
         if (!this._updated) {
             const srcSocket = new tls.TLSSocket(this._src, {
                 rejectUnauthorized: false,
                 requestCert: false,
                 isServer: true,
-                key: KEYS.key,
-                cert: KEYS.cert
+                ...(!handleSni && {
+                    key: KEYS.key,
+                    cert: KEYS.cert,
+                }),
+                SNICallback: handleSni,
             })
                 .on(DATA, onDataFromClient)
                 .on(CLOSE, onClose)

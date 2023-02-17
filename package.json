@@ -22,5 +22,8 @@
   ],
   "author": "gr3p",
   "license": "ISC",
-  "homepage": "https://github.com/gr3p1p3/transparent-proxy"
+  "homepage": "https://github.com/gr3p1p3/transparent-proxy",
+  "devDependencies": {
+    "node-forge": "^1.3.1"
+  }
 }

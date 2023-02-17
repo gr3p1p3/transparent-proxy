@@ -1,6 +1,8 @@
 const util = require('util');
+const tls = require("tls");
 const exec = util.promisify(require('child_process').exec);
 const ProxyServer = require('./ProxyServer');
+const forge = require('node-forge');
 
 async function test1() {
     console.log('Starting TEST1 - Normal Transparent-Proxy!');
@@ -218,7 +220,7 @@ async function test5() {
 async function test6() {
     console.log('Starting TEST6 - Async inject data');
 
-    const toTest = ['http://httpbin.org/headers', 'http://httpbin.org/headers'];
+    const toTest = ['http://httpbin.org/headers'];
 
     const ADDED_HEADER = "x-test: my async value";
     const PORT = 10006;
@@ -245,7 +247,7 @@ async function test6() {
             console.log('transparent-proxy was started!', server.address());
 
             for (const singlePath of toTest) {
-                const cmd = 'curl' + ' -x 127.0.0.1:' + PORT + ' -k ' + singlePath;
+                const cmd = 'curl' + ' -vv -x 127.0.0.1:' + PORT + ' -k ' + singlePath;
                 console.log(cmd);
                 const {stdout, stderr} = await exec(cmd);
                 console.log('Response =>', stdout);
@@ -262,6 +264,75 @@ async function test6() {
     })
 }
 
+async function test7() {
+    console.log("Starting TEST7 - Use SNICallback");
+  
+    const toTest = ["ifconfig.me", "ifconfig.io"];
+  
+    const PORT = 10007;
+  
+    //init ProxyServer
+    const server = new ProxyServer({
+        verbose: true,
+        intercept: true,
+        handleSni: (hostname, callback) => {
+            console.log(`In SNI callback for ${hostname}`)
+            try {
+                const keypair = forge.rsa.generateKeyPair({bits: 2048, e: 0x10001});
+                const cert = forge.pki.createCertificate()
+                cert.publicKey = keypair.publicKey
+            
+                const attrs = [                 
+                    {
+                      name: 'organizationName',
+                      value: 'transparent-proxy',
+                    }
+                ]
+                cert.setIssuer(attrs)
+                cert.setSubject([
+                   ...attrs,
+                  {
+                    name: 'commonName',
+                    value: hostname,
+                  },
+                ]);
+
+                cert.sign(keypair.privateKey)
+                callback(null, tls.createSecureContext({
+                    key: forge.pki.privateKeyToPem(keypair.privateKey),
+                    cert: forge.pki.certificateToPem(cert)
+                }
+                ))
+                //throw new Error('not implemented')
+            } catch (err) {
+                callback(err)
+            }
+        } 
+    });
+  
+    return new Promise(function (res, rej) {
+      server.listen(PORT, "0.0.0.0", async function () {
+        console.log("transparent-proxy was started!", server.address());
+  
+        for (const domain of toTest) {
+          const cmd = "curl" + " -v -x 127.0.0.1:" + PORT + " -k https://" + domain;
+          console.log(cmd);
+          const { stdout, stderr } = await exec(cmd);
+          console.log("Response =>", stdout);
+          console.log("Log =>", stderr);
+          if(!(stderr.includes('issuer: O=transparent-proxy') && stderr.includes(`CN=${domain}`))) {
+            console.error(`Certificate issued by O=transtparent-proxy for CN=${domain} expected`)
+            process.exit(7)
+          }
+        }
+  
+        console.log("Closing transparent-proxy Server - TEST7\n");
+        server.close();
+        res(true);
+      });
+    });
+}
+
 async function main() {
     await test1();
     await test2();
@@ -269,6 +340,7 @@ async function main() {
     await test4();
     await test5();
     await test6();
+    await test7();
 
 }
 
