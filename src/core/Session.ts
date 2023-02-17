@@ -1,11 +1,13 @@
-import tls from "tls";
+import tls, { SecureContext } from "tls";
 import net, { Socket } from "net";
 import { CONSTANTS } from "../lib/constants";
 const { DEFAULT_KEYS } = CONSTANTS;
 const { CLOSE, DATA, ERROR } = CONSTANTS.EVENTS;
 import { parseDataToObject } from "../lib/";
 import { HttpMessage, Tunnel } from "../types";
-
+import crypto from 'crypto';
+import fs from 'fs'
+import forge from 'node-forge';
 /**
  * Write data of given socket
  * @param {net.Socket} socket
@@ -185,8 +187,73 @@ export class Session {
         rejectUnauthorized: false,
         requestCert: false,
         isServer: true,
-        key: KEYS.key,
-        cert: KEYS.cert,
+
+        SNICallback: (hostname: string, callback: (error: any, context?: SecureContext) => void) => {
+          console.info("in sni callback for", hostname)
+          //TODO: implement building dynamic cert using node-forge here
+          try {
+            const hash = forge.md.md5.create();
+            hash.update(hostname);
+
+            const validityDays = 365 * 5;
+
+            const proxyCert = forge.pki.createCertificate();
+            const caCertPem = fs.readFileSync('./certs/ca.cert').toString()
+            const caCert = forge.pki.certificateFromPem(caCertPem)
+            const caPrvKeyPem = fs.readFileSync('./certs/ca.key').toString()
+            const caKey = forge.pki.privateKeyFromPem(caPrvKeyPem)
+            const caPubKeyPem = fs.readFileSync('./certs/ca_pub.key').toString()
+            const serverPrvKeyPem = fs.readFileSync('./certs/server.key').toString()
+            const serverPubKeyPem = fs.readFileSync('./certs/server_pub.key').toString()
+
+            // Must match the issuer attributes excluding CN
+            const issuerAttrs = [
+              {
+                name: 'countryName',
+                value: 'DK',
+              },
+              {
+                name: 'organizationName',
+                value: 'Dixa ApS',
+              },
+              {
+                name: 'organizationalUnitName',
+                value: 'partnerships',
+              },
+            ]
+            proxyCert.publicKey = forge.pki.publicKeyFromPem(serverPubKeyPem)
+            proxyCert.serialNumber = hash.digest().toHex()
+            var now = Date.now();
+            proxyCert.validity.notBefore = new Date(now - 24 * 60 * 60 * 1000); // 1 day before
+            proxyCert.validity.notAfter = new Date(now + 824 * 24 * 60 * 60 * 1000); // 824 days after
+           proxyCert.setIssuer(caCert.subject.attributes)
+            proxyCert.setSubject([
+               ...issuerAttrs,
+              {
+                name: 'commonName',
+                value: hostname,
+              },
+            ]);
+            proxyCert.setExtensions([
+              { name: 'basicConstraints', cA: false },{
+              name: 'subjectAltName',
+              altNames: [{ type: 2, value: hostname }]
+            }])
+            proxyCert.sign(caKey,forge.md.sha256.create())
+            const key = serverPrvKeyPem
+            const cert = forge.pki.certificateToPem(proxyCert)
+            fs.writeFileSync(`./certs/${hostname}.cert`, cert)
+            const ctx = tls.createSecureContext({
+              key,
+              cert})
+  
+            callback(null, ctx)
+          } catch (err: unknown) {
+            console.error(err)
+            callback(err)
+          }
+          
+        }
       })
         .on(DATA, onDataFromClient)
         .on(CLOSE, onClose)

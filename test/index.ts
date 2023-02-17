@@ -220,7 +220,7 @@ async function test5() {
 async function test6() {
     console.log('Starting TEST6 - Async inject data');
 
-    const toTest = ['http://httpbin.org/headers', 'http://httpbin.org/headers'];
+    const toTest = ['https://httpbin.org/headers', 'http://httpbin.org/headers'];
 
     const ADDED_HEADER = "x-test: my async value";
     const PORT = 10006;
