@@ -321,7 +321,7 @@ async function test7() {
           console.log("Response =>", stdout);
           console.log("Log =>", stderr);
           if(!(stderr.includes('issuer: O=transparent-proxy') && stderr.includes(`CN=${domain}`))) {
-            console.error(`Certificate issued by O=transtparent-proxy for CN=${domain} expected`)
+            console.error(`Certificate issued by O=transparent-proxy for CN=${domain} expected`)
             process.exit(7)
           }
         }
