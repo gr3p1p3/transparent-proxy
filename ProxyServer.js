@@ -19,17 +19,17 @@ class ProxyServer extends net.createServer {
         const bridgedConnections = {};
 
         super(function (clientSocket) {
-        onConnectedClientHandling(
-            clientSocket,
-            bridgedConnections,
-            {
-                upstream, tcpOutgoingAddress,
-                injectData, injectResponse,
-                auth, intercept, keys,
-                handleSni,
+            onConnectedClientHandling(
+                clientSocket,
+                bridgedConnections,
+                {
+                    upstream, tcpOutgoingAddress,
+                    injectData, injectResponse,
+                    auth, intercept, keys,
+                    handleSni,
 
-            },
-            logger)
+                },
+                logger)
         });
         this.bridgedConnections = bridgedConnections;
     }
