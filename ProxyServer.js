@@ -14,28 +14,28 @@ class ProxyServer extends net.createServer {
             injectData, injectResponse,
             auth, intercept, keys,
             handleSni
-    } = {...DEFAULT_OPTIONS, ...options}; //merging with default options
-    const logger = new Logger(verbose);
-    const bridgedConnections = {};
+        } = {...DEFAULT_OPTIONS, ...options}; //merging with default options
+        const logger = new Logger(verbose);
+        const bridgedConnections = {};
 
-      super(function (clientSocket) {
+        super(function (clientSocket) {
         onConnectedClientHandling(
             clientSocket,
             bridgedConnections,
             {
-                      upstream, tcpOutgoingAddress,
-                      injectData, injectResponse,
-                      auth, intercept, keys,
-                      handleSni,
+                upstream, tcpOutgoingAddress,
+                injectData, injectResponse,
+                auth, intercept, keys,
+                handleSni,
 
             },
             logger)
-    });
-    this.bridgedConnections = bridgedConnections;
-  }
+        });
+        this.bridgedConnections = bridgedConnections;
+    }
 
-  getBridgedConnections() {
-    return this.bridgedConnections;
+    getBridgedConnections() {
+        return this.bridgedConnections;
     };
 }
 
