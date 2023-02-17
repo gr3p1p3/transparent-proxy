@@ -7,29 +7,29 @@ const {DEFAULT_OPTIONS} = require('./lib/constants');
 
 
 class ProxyServer extends net.createServer {
-  constructor(options) {
-    const {
+    constructor(options) {
+      const {
             upstream, tcpOutgoingAddress,
-      verbose,
+        verbose,
             injectData, injectResponse,
             auth, intercept, keys,
             handleSni
         } = {...DEFAULT_OPTIONS, ...options}; //merging with default options
-    const logger = new Logger(verbose);
-    const bridgedConnections = {};
+      const logger = new Logger(verbose);
+      const bridgedConnections = {};
 
-    super(function (clientSocket) {
-      onConnectedClientHandling(
-        clientSocket,
-        bridgedConnections,
-        {
-                    upstream, tcpOutgoingAddress,
-                    injectData, injectResponse,
-                    auth, intercept, keys,
-                    handleSni,
+      super(function (clientSocket) {
+        onConnectedClientHandling(
+            clientSocket,
+            bridgedConnections,
+            {
+                      upstream, tcpOutgoingAddress,
+                      injectData, injectResponse,
+                      auth, intercept, keys,
+                      handleSni,
 
-        },
-                logger)
+            },
+                  logger)
     });
     this.bridgedConnections = bridgedConnections;
   }
