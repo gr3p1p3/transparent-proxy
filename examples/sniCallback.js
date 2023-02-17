@@ -13,6 +13,7 @@ const ProxyServer = require('../ProxyServer');
     Uses node-forge for creating & signing certificates.
 
     Test with curl passing --cacert, note the --insecure/-k flag is not set:
+        $ cd examples && node sniCallback.js
         $ curl -v https://google.com -x localhost:8080 --cacert ca.cert
     You'll see information about certificate validation in the output:
         * Server certificate:
