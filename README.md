@@ -4,7 +4,7 @@
 
 This module was built on top of TCP-level to avoid header-stripping problem of nodejs http(s)-modules. 
 
-It allows to upstream client-request dynamically to other proxies, or to certain iFace, and more...
+It allows to upstream client-request dynamically to other proxies, or to certain iFace, to spoof requests and more...
 
 It supports [Basic Proxy-Authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authorization).
 
@@ -47,6 +47,7 @@ server.listen(8080, '0.0.0.0', function () {
 |[options.keys] | <code>Function</code> |  The keys to use while handshake. It will work only if intercept is true. Returns Object or false |
 |[options.verbose] | <code>Boolean</code> |  Activate verbose mode. |
 |[options.intercept] | <code>Boolean</code> |  Activate interception of encrypted communications. False as default. |
+|[options.logger] | <code>Logger</code> |  Must be an object implementing `log(args[])` and `error(args[])`. Defaults to the [inbuilt logger](./lib/Logger.js) writing to the console if `verbose` is true.|
 |[options.handleSni] | <code>Function</code> | Pass SNICallback to be added to the server. See [SNICallback tls.createServer options](https://nodejs.org/api/tls.html#tlscreateserveroptions-secureconnectionlistener) |
 
 

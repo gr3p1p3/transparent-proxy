@@ -13,9 +13,8 @@ class ProxyServer extends net.createServer {
             verbose,
             injectData, injectResponse,
             auth, intercept, keys,
-            handleSni
+            handleSni, logger
         } = {...DEFAULT_OPTIONS, ...options}; //merging with default options
-        const logger = new Logger(verbose);
         const bridgedConnections = {};
 
         super(function (clientSocket) {
@@ -29,7 +28,7 @@ class ProxyServer extends net.createServer {
                     handleSni,
 
                 },
-                logger)
+                logger || new Logger(verbose) )
         });
         this.bridgedConnections = bridgedConnections;
     }

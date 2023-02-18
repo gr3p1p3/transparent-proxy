@@ -220,9 +220,9 @@ async function test5() {
 async function test6() {
     console.log('Starting TEST6 - Async inject data');
 
-    const toTest = ['http://httpbin.org/headers'];
+    const toTest = ['http://httpbin.org/headers', 'https://httpbin.org/headers'];
 
-    const ADDED_HEADER = "x-test: my async value";
+    const ADDED_HEADER = 'x-test: my async value';
     const PORT = 10006;
 
     console.log('Starting Proxy Server with spoof-behaviors');
@@ -235,7 +235,7 @@ async function test6() {
         verbose: true,
         intercept: true,
         injectData: async (data, session) => {
-            const requestLines = data.toString().split("\r\n");
+            const requestLines = data.toString().split('\r\n');
             // add the new header after the request line
             requestLines.splice(2, 0, `${await getHeader()}`);
             return requestLines.join('\r\n');
@@ -251,7 +251,7 @@ async function test6() {
                 console.log(cmd);
                 const {stdout, stderr} = await exec(cmd);
                 console.log('Response =>', stdout);
-                if (JSON.parse(stdout).headers['X-Test'] !== "my async value") {
+                if (JSON.parse(stdout).headers['X-Test'] !== 'my async value') {
                     console.error(`Header ${ADDED_HEADER} must have been sent`);
                     process.exit(6);
                 }
@@ -265,12 +265,59 @@ async function test6() {
 }
 
 async function test7() {
-    console.log("Starting TEST7 - Use SNICallback");
-  
-    const toTest = ["ifconfig.me", "ifconfig.io"];
-  
+    console.log('Starting TEST7 - Custom Logger');
+
+    const toTest = ['http://ifconfig.io/ua', 'https://ifconfig.me/ua'];
+
     const PORT = 10007;
-  
+
+    console.log('Starting Proxy Server with custom logger');
+    let logs = [];
+    const loggerStub =  {
+        log(args) {
+            logs.push(args)
+        },
+        
+        error(args) {
+            logs.push(args)
+        }
+    };
+
+    //init ProxyServer
+    const server = new ProxyServer({
+        verbose: true,
+        logger: loggerStub,
+    });
+
+    return new Promise(function (res, rej) {
+        server.listen(PORT, '0.0.0.0', async function () {
+            console.log('transparent-proxy was started!', server.address());
+
+            for (const singlePath of toTest) {
+                const cmd = 'curl' + ' -x 127.0.0.1:' + PORT + ' -k ' + singlePath;
+                logs = [];
+                await exec(cmd);
+   
+                if (!logs.length) {
+                    console.error('Url should have been written to logs', logs);
+                    process.exit(7);
+                }
+            }
+
+            console.log('Closing transparent-proxy Server - TEST7\n');
+            server.close();
+            res(true);
+        });
+    })
+}
+
+async function test8() {
+    console.log("Starting TEST8 - Use SNICallback");
+    
+    const toTest = ["ifconfig.me", "ifconfig.io"];
+
+    const PORT = 10008;
+
     //init ProxyServer
     const server = new ProxyServer({
         verbose: true,
@@ -284,17 +331,17 @@ async function test7() {
             
                 const attrs = [                 
                     {
-                      name: 'organizationName',
-                      value: 'transparent-proxy',
+                    name: 'organizationName',
+                    value: 'transparent-proxy',
                     }
                 ]
                 cert.setIssuer(attrs)
                 cert.setSubject([
-                   ...attrs,
-                  {
+                ...attrs,
+                {
                     name: 'commonName',
                     value: hostname,
-                  },
+                },
                 ]);
 
                 cert.sign(keypair.privateKey)
@@ -303,34 +350,33 @@ async function test7() {
                     cert: forge.pki.certificateToPem(cert)
                 }
                 ))
-                //throw new Error('not implemented')
             } catch (err) {
                 callback(err)
             }
         } 
     });
-  
+
     return new Promise(function (res, rej) {
-      server.listen(PORT, "0.0.0.0", async function () {
+    server.listen(PORT, "0.0.0.0", async function () {
         console.log("transparent-proxy was started!", server.address());
-  
+
         for (const domain of toTest) {
-          const cmd = "curl" + " -v -x 127.0.0.1:" + PORT + " -k https://" + domain;
-          console.log(cmd);
-          const { stdout, stderr } = await exec(cmd);
-          console.log("Response =>", stdout);
-          console.log("Log =>", stderr);
-          if(!(stderr.includes('issuer: O=transparent-proxy') && stderr.includes(`CN=${domain}`))) {
+        const cmd = "curl" + " -v -x 127.0.0.1:" + PORT + " -k https://" + domain;
+        console.log(cmd);
+        const { stdout, stderr } = await exec(cmd);
+        console.log("Response =>", stdout);
+        console.log("Log =>", stderr);
+        if(!(stderr.includes('issuer: O=transparent-proxy') && stderr.includes(`CN=${domain}`))) {
             console.error(`Certificate issued by O=transparent-proxy for CN=${domain} expected`)
-            process.exit(7)
-          }
+            process.exit(8)
         }
-  
-        console.log("Closing transparent-proxy Server - TEST7\n");
+        }
+
+        console.log("Closing transparent-proxy Server - TEST8\n");
         server.close();
         res(true);
-      });
     });
+});
 }
 
 async function main() {
@@ -341,7 +387,7 @@ async function main() {
     await test5();
     await test6();
     await test7();
-
+    await test8();
 }
 
 return main();
