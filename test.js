@@ -218,9 +218,9 @@ async function test5() {
 async function test6() {
     console.log('Starting TEST6 - Async inject data');
 
-    const toTest = ['http://httpbin.org/headers', 'http://httpbin.org/headers'];
+    const toTest = ['http://httpbin.org/headers', 'https://httpbin.org/headers'];
 
-    const ADDED_HEADER = "x-test: my async value";
+    const ADDED_HEADER = 'x-test: my async value';
     const PORT = 10006;
 
     console.log('Starting Proxy Server with spoof-behaviors');
@@ -233,7 +233,7 @@ async function test6() {
         verbose: true,
         intercept: true,
         injectData: async (data, session) => {
-            const requestLines = data.toString().split("\r\n");
+            const requestLines = data.toString().split('\r\n');
             // add the new header after the request line
             requestLines.splice(2, 0, `${await getHeader()}`);
             return requestLines.join('\r\n');
@@ -249,7 +249,7 @@ async function test6() {
                 console.log(cmd);
                 const {stdout, stderr} = await exec(cmd);
                 console.log('Response =>', stdout);
-                if (JSON.parse(stdout).headers['X-Test'] !== "my async value") {
+                if (JSON.parse(stdout).headers['X-Test'] !== 'my async value') {
                     console.error(`Header ${ADDED_HEADER} must have been sent`);
                     process.exit(6);
                 }
@@ -317,7 +317,6 @@ async function main() {
     await test5();
     await test6();
     await test7();
-
 }
 
 return main();
