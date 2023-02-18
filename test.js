@@ -270,7 +270,7 @@ async function test7() {
     const PORT = 10007;
 
     console.log('Starting Proxy Server with custom logger');
-    const logs = [];
+    let logs = [];
     const loggerStub =  {
         log(args) {
             logs.push(args)
@@ -293,7 +293,7 @@ async function test7() {
 
             for (const singlePath of toTest) {
                 const cmd = 'curl' + ' -x 127.0.0.1:' + PORT + ' -k ' + singlePath;
-                logs = []
+                logs = [];
                 await exec(cmd);
    
                 if (!logs.length) {
