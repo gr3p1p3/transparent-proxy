@@ -297,7 +297,7 @@ async function test7() {
                 await exec(cmd);
    
                 if (!logs.length) {
-                    console.error(`Url should have been written to logs`, logs);
+                    console.error('Url should have been written to logs', logs);
                     process.exit(7);
                 }
             }
