@@ -4,7 +4,7 @@
 
 This module was built on top of TCP-level to avoid header-stripping problem of nodejs http(s)-modules. 
 
-It allows to upstream client-request dynamically to other proxies, or to certain iFace, and more...
+It allows to upstream client-request dynamically to other proxies, or to certain iFace, to spoof requests and more...
 
 It supports [Basic Proxy-Authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authorization).
 

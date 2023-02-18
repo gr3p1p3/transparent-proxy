@@ -270,7 +270,7 @@ async function test7() {
     const PORT = 10007;
 
     console.log('Starting Proxy Server with custom logger');
-    let logs = []
+    const logs = [];
     const loggerStub =  {
         log(args) {
             logs.push(args)
