@@ -279,7 +279,7 @@ async function test7() {
         error(args) {
             logs.push(args)
         }
-    }
+    };
 
     //init ProxyServer
     const server = new ProxyServer({
