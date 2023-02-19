@@ -83,20 +83,19 @@ class Session extends Object {
         return this.authenticated;
     }
 
-    setRequest(data) {
+    parseAndSetRequest(data) {
         return new Promise((resolve) => {
-            createServer()
-                .on('connect', resolve)
-                .on('request', resolve)
-                .emit('connection', this._srcMirror)
-            this._srcMirror.emit('data', data)
+            this._requestParsingServer
+                .once('connect', resolve)
+                .once('request', resolve)
+            this._requestParsingSocket.emit('data', data)
         }).then(request => this.request = request)
     }
 
-    setResponse(data) {
+    parseAndSetResponse(data) {
         return new Promise((resolve) => {
-            this._setResponseResolver = resolve
-            this._dstMirror.emit('data', data)
+            this._responseParsingServer.once('response', resolve)
+            this._responseParsingSocket.emit('data', data)
         }).then(response => this.response = response)
     }
 
@@ -107,7 +106,9 @@ class Session extends Object {
      */
     setResponseSocket(socket) {
         this._src = socket;
-        this._srcMirror = new net.Socket()
+        this._requestParsingSocket = new net.Socket()
+        this._requestParsingServer = createServer()
+        this._requestParsingServer.emit('connection', this._requestParsingSocket)
         return this;
     }
 
@@ -118,8 +119,8 @@ class Session extends Object {
      */
     setRequestSocket(socket) {
         this._dst = socket;
-        this._dstMirror = new net.Socket()
-        request({ createConnection: () => this._dstMirror }, response => { this._setResponseResolver(response) });
+        this._responseParsingSocket = new net.Socket()
+        this._responseParsingServer = request({ createConnection: () => this._responseParsingSocket });
         return this;
     }
 

@@ -84,7 +84,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
     async function onDataFromUpstream(dataFromUpStream) {
         const thisTunnel = bridgedConnections[remoteID];
         if (thisTunnel) {
-            await thisTunnel.setResponse(dataFromUpStream);
+            await thisTunnel.parseAndSetResponse(dataFromUpStream);
 
             const responseData = isFunction(injectResponse)
                 ? await injectResponse(dataFromUpStream, thisTunnel)
@@ -102,7 +102,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
     async function onDirectConnectionOpen(srcData) {
         const thisTunnel = bridgedConnections[remoteID];
         if (thisTunnel) {
-            await thisTunnel.setRequest(srcData);
+            await thisTunnel.parseAndSetRequest(srcData);
 
             const requestData = isFunction(injectData)
                 ? await injectData(srcData, thisTunnel)
@@ -249,7 +249,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
      */
     async function onDataFromClient(data) {
         const thisTunnel = bridgedConnections[remoteID];
-        await thisTunnel.setRequest(data)
+        await thisTunnel.parseAndSetRequest(data);
 
         const dataString = data.toString();
 
