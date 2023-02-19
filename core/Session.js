@@ -1,5 +1,4 @@
 const tls = require('tls');
-const parseDataToObject = require('../lib/parseDataToObject');
 const net = require('net');
 const {EVENTS, DEFAULT_KEYS} = require('../lib/constants');
 const {request, createServer} = require('http');
@@ -83,20 +82,24 @@ class Session extends Object {
         return this.authenticated;
     }
 
-    parseAndSetRequest(data) {
-        return new Promise((resolve) => {
-            this._requestParsingServer
-                .once('connect', resolve)
-                .once('request', resolve)
-            this._requestParsingSocket.emit('data', data)
-        }).then(request => this.request = request)
+    _requestPromise = new Promise(resolve => this._requestPromiseResolve = resolve)
+
+    get request() {
+        return this._requestPromise
     }
 
-    parseAndSetResponse(data) {
-        return new Promise((resolve) => {
-            this._responseParsingServer.once('response', resolve)
-            this._responseParsingSocket.emit('data', data)
-        }).then(response => this.response = response)
+    set request(val) {
+        this._requestPromiseResolve(val)
+    }
+
+    _responsePromise = new Promise(resolve => this._responsePromiseResolve = resolve)
+
+    get response() {
+        return this._responsePromise
+    }
+
+    set response(val) {
+        this._responsePromiseResolve(val)
     }
 
     /**
@@ -106,9 +109,17 @@ class Session extends Object {
      */
     setResponseSocket(socket) {
         this._src = socket;
-        this._requestParsingSocket = new net.Socket()
-        this._requestParsingServer = createServer()
-        this._requestParsingServer.emit('connection', this._requestParsingSocket)
+        const mirror = new net.Socket()
+        this._src.prependListener('data', data => {
+            if(!this.request || this.request.complete) {
+                this._requestPromise = new Promise(resolve => this._requestPromiseResolve = resolve)
+            }
+            mirror.emit('data', data)
+        })
+        createServer()
+            .on('connect', request => this.request = request)
+            .on('request', request => this.request = request)
+            .emit('connection', mirror)
         return this;
     }
 
@@ -119,8 +130,15 @@ class Session extends Object {
      */
     setRequestSocket(socket) {
         this._dst = socket;
-        this._responseParsingSocket = new net.Socket()
-        this._responseParsingServer = request({ createConnection: () => this._responseParsingSocket });
+        const mirror = new net.Socket()
+        this._dst.prependListener('data', data => {
+            if(!this.response || this.response.complete){
+                this._responsePromise = new Promise(resolve => this._responsePromiseResolve = resolve)
+            }
+            mirror.emit('data', data)
+        })
+        request({ createConnection: () => mirror })
+            .on('response', response => this.response = response);
         return this;
     }
 

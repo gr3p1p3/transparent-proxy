@@ -84,8 +84,6 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
     async function onDataFromUpstream(dataFromUpStream) {
         const thisTunnel = bridgedConnections[remoteID];
         if (thisTunnel) {
-            await thisTunnel.parseAndSetResponse(dataFromUpStream);
-
             const responseData = isFunction(injectResponse)
                 ? await injectResponse(dataFromUpStream, thisTunnel)
                 : dataFromUpStream;
@@ -102,8 +100,6 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
     async function onDirectConnectionOpen(srcData) {
         const thisTunnel = bridgedConnections[remoteID];
         if (thisTunnel) {
-            await thisTunnel.parseAndSetRequest(srcData);
-
             const requestData = isFunction(injectData)
                 ? await injectData(srcData, thisTunnel)
                 : srcData;
@@ -161,13 +157,13 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         /**
          * @param {Error} connectionError
          */
-        function onTunnelHTTPConnectionOpen(connectionError) {
+        async function onTunnelHTTPConnectionOpen(connectionError) {
             if (connectionError) {
                 return onClose(connectionError);
             }
 
             if (connectionOpt.credentials) {
-                const headers = thisTunnel.request.headers;
+                const { headers } = await thisTunnel.request;
                 const basedCredentials = Buffer.from(connectionOpt.credentials)
                     .toString('base64'); //converting to base64
                 headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
@@ -189,7 +185,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
             }
             if (connectionOpt.upstreamed) {
                 if (connectionOpt.credentials) {
-                    const headers = thisTunnel.request.headers;
+                    const { headers } = await thisTunnel.request;
                     const basedCredentials = Buffer.from(connectionOpt.credentials).toString('base64'); //converting to base64
                     headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
                     const newData = rebuildHeaders(headers, data);
@@ -249,13 +245,11 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
      */
     async function onDataFromClient(data) {
         const thisTunnel = bridgedConnections[remoteID];
-        await thisTunnel.parseAndSetRequest(data);
-
         const dataString = data.toString();
 
         try {
             if (dataString && dataString.length > 0) {
-                const headers = thisTunnel.request.headers;
+                const { headers } = await thisTunnel.request;
                 const split = dataString.split(CRLF);
 
                 if (isFunction(auth)
