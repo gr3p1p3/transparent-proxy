@@ -1,6 +1,6 @@
 {
   "name": "@wwerner/transparent-proxy",
-  "version": "1.12.0",
+  "version": "1.12.0-beta",
   "description": "Real transparent HTTP-Proxy-Server. Upstream your requests whatever you want!",
   "main": "ProxyServer.js",
   "scripts": {
@@ -22,7 +22,7 @@
   ],
   "author": "gr3p",
   "license": "ISC",
-  "homepage": "https://github.com/gr3p1p3/transparent-proxy",
+  "homepage": "https://github.com/wwerner/transparent-proxy",
   "devDependencies": {
     "node-forge": "^1.3.1"
   }
