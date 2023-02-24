@@ -1,8 +1,7 @@
 const tls = require('tls');
-const {EVENTS, DEFAULT_KEYS, STRINGS} = require('../lib/constants');
+const {EVENTS, DEFAULT_KEYS, HTTP_METHODS} = require('../lib/constants');
 const parseDataToObject = require('../lib/parseDataToObject');
 const {CLOSE, DATA, ERROR} = EVENTS;
-const {BLANK, CRLF, LF, SEPARATOR} = STRINGS;
 
 /**
  * Write data of given socket
@@ -115,7 +114,8 @@ class Session extends Object {
 
     set request(buffer) {
         const parsedRequest = parseDataToObject(buffer);
-        if (parsedRequest.headers) {
+        if (parsedRequest.headers
+            && (!this._request.headers || this.request.method === HTTP_METHODS.CONNECT)) { //if not already set
             this._request = parsedRequest;
         }
         return this._request;

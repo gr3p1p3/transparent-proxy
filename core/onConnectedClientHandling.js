@@ -161,7 +161,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         /**
          * @param {Error} connectionError
          */
-        function onTunnelHTTPConnectionOpen(connectionError) {
+        async function onTunnelHTTPConnectionOpen(connectionError) {
             if (connectionError) {
                 return onClose(connectionError);
             }
@@ -172,10 +172,10 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
                     .toString('base64'); //converting to base64
                 headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
                 const newData = rebuildHeaders(headers, data);
-                thisTunnel.clientRequestWrite(newData)
+                await thisTunnel.clientRequestWrite(newData)
             }
             else {
-                onDirectConnectionOpen(data);
+                await onDirectConnectionOpen(data);
             }
         }
 
