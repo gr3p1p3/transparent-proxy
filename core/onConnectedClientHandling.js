@@ -90,7 +90,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
                 ? await injectResponse(dataFromUpStream, thisTunnel)
                 : dataFromUpStream;
 
-            thisTunnel.clientResponseWrite(responseData);
+            await thisTunnel.clientResponseWrite(responseData);
             //updateSockets if needed after first response
             updateSockets();
         }
@@ -108,7 +108,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
                 ? await injectData(srcData, thisTunnel)
                 : srcData;
 
-            thisTunnel.clientRequestWrite(requestData);
+            await thisTunnel.clientRequestWrite(requestData);
         }
     }
 
@@ -193,15 +193,15 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
                     const basedCredentials = Buffer.from(connectionOpt.credentials).toString('base64'); //converting to base64
                     headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
                     const newData = rebuildHeaders(headers, data);
-                    thisTunnel.clientRequestWrite(newData)
+                    await thisTunnel.clientRequestWrite(newData)
                 }
                 else {
-                    onDirectConnectionOpen(data);
+                    await onDirectConnectionOpen(data);
                 }
             }
             else {
                 // response as normal http-proxy
-                thisTunnel.clientResponseWrite(OK + CRLF + CRLF);
+                await thisTunnel.clientResponseWrite(OK + CRLF + CRLF);
                 updateSockets();
             }
         }

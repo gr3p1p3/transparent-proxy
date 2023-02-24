@@ -10,9 +10,12 @@ const {BLANK, CRLF, LF, SEPARATOR} = STRINGS;
  * @param data
  */
 function socketWrite(socket, data) {
-    if (socket && !socket.destroyed && data) {
-        socket.write(data);
-    }
+    return new Promise(function (resolve, reject) {
+        if (socket && !socket.destroyed && data) {
+            return socket.write(data, null, resolve);
+        }
+        return resolve(false);
+    });
 }
 
 /**
@@ -48,18 +51,16 @@ class Session extends Object {
      * @param {buffer|string} data - The data to send.
      * @returns {Session}
      */
-    clientRequestWrite(data) {
-        socketWrite(this._dst, data);
-        return this;
+    async clientRequestWrite(data) {
+        return socketWrite(this._dst, data);
     }
 
     /**
      * @param {buffer|string} data - The data to send.
      * @returns {Session}
      */
-    clientResponseWrite(data) {
-        socketWrite(this._src, data);
-        return this;
+    async clientResponseWrite(data) {
+        return socketWrite(this._src, data);
     }
 
     /**
