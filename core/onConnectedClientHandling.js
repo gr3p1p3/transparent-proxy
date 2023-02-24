@@ -19,6 +19,12 @@ const {AUTH_REQUIRED, OK, NOT_OK, TIMED_OUT, NOT_FOUND} = HTTP_RESPONSES;
 const {BLANK, CRLF, EMPTY, SEPARATOR, PROXY_AUTH, PROXY_AUTH_BASIC} = STRINGS;
 const DOUBLE_CLRF = CRLF + CRLF;
 
+function sleep(ms) {
+    return new Promise(function (res, rej) {
+        setTimeout(res, ms);
+    });
+}
+
 /**
  *
  * @param clientSocket
@@ -84,15 +90,22 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
     async function onDataFromUpstream(dataFromUpStream) {
         const thisTunnel = bridgedConnections[remoteID];
         if (thisTunnel) {
-            thisTunnel.response = dataFromUpStream;
-
-            const responseData = isFunction(injectResponse)
-                ? await injectResponse(dataFromUpStream, thisTunnel)
-                : dataFromUpStream;
-
-            await thisTunnel.clientResponseWrite(responseData);
-            //updateSockets if needed after first response
-            updateSockets();
+            if (!thisTunnel._isResponsePaused) {
+                thisTunnel.response = dataFromUpStream;
+                thisTunnel._pauseResponse();
+                const responseData = isFunction(injectResponse)
+                    ? await injectResponse(dataFromUpStream, thisTunnel)
+                    : dataFromUpStream;
+                thisTunnel._resumeResponse();
+                await thisTunnel.clientResponseWrite(responseData);
+                //updateSockets if needed after first response
+                updateSockets();
+                return true;
+            }
+            else {
+                await sleep(1); //out from event-loop
+                return onDataFromUpstream(dataFromUpStream);
+            }
         }
     }
 
@@ -102,13 +115,20 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
     async function onDirectConnectionOpen(srcData) {
         const thisTunnel = bridgedConnections[remoteID];
         if (thisTunnel) {
-            thisTunnel.request = srcData;
-
-            const requestData = isFunction(injectData)
-                ? await injectData(srcData, thisTunnel)
-                : srcData;
-
-            await thisTunnel.clientRequestWrite(requestData);
+            if (!thisTunnel._isRequestPaused) {
+                thisTunnel.request = srcData;
+                thisTunnel._pauseRequest();
+                const requestData = isFunction(injectData)
+                    ? await injectData(srcData, thisTunnel)
+                    : srcData;
+                thisTunnel._resumeRequest();
+                await thisTunnel.clientRequestWrite(requestData);
+                return true;
+            }
+            else {
+                await sleep(1); //out from event-loop
+                return onDirectConnectionOpen(srcData);
+            }
         }
     }
 

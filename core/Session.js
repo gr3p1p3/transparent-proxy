@@ -44,6 +44,29 @@ class Session extends Object {
         this.isHttps = false;
         this._request = {};
         this._response = {};
+
+        this._isRequestPaused = false;
+        this._isResponsePaused = false;
+    }
+
+    _pauseRequest() {
+        this._dst.pause();
+        this._isRequestPaused = true;
+    }
+
+    _resumeRequest() {
+        this._dst.resume();
+        this._isRequestPaused = false;
+    }
+
+    _pauseResponse() {
+        this._src.pause();
+        this._isResponsePaused = true;
+    }
+
+    _resumeResponse() {
+        this._src.resume();
+        this._isResponsePaused = false;
     }
 
     /**
