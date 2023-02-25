@@ -116,7 +116,6 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         const thisTunnel = bridgedConnections[remoteID];
         if (thisTunnel) {
             if (!thisTunnel._isRequestPaused) {
-                thisTunnel.request = srcData;
                 thisTunnel._pauseRequest();
                 const requestData = isFunction(injectData)
                     ? await injectData(srcData, thisTunnel)
@@ -300,7 +299,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
                         }
                         else {
                             //return auth-error and close all
-                            thisTunnel.clientResponseWrite(AUTH_REQUIRED + DOUBLE_CLRF + HTTP_BODIES.AUTH_REQUIRED);
+                            await thisTunnel.clientResponseWrite(AUTH_REQUIRED + DOUBLE_CLRF + HTTP_BODIES.AUTH_REQUIRED);
                             return onClose();
                         }
                     }

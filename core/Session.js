@@ -45,6 +45,8 @@ class Session extends Object {
         this._request = {};
         this._response = {};
 
+        this._requestCounter = 0;
+        this._responseCounter = 0;
         this._isRequestPaused = false;
         this._isResponsePaused = false;
     }
@@ -136,11 +138,22 @@ class Session extends Object {
     }
 
     set request(buffer) {
-        const parsedRequest = parseDataToObject(buffer);
-        if (parsedRequest.headers
-            && (!this._request.headers || this.request.method === HTTP_METHODS.CONNECT)) { //if not already set
+        const parsedRequest = parseDataToObject(buffer, null, this._requestCounter > 0);
+        const body = parsedRequest.body;
+        delete parsedRequest.body;
+
+        ++this._requestCounter;
+        if (parsedRequest.headers) {
             this._request = parsedRequest;
         }
+        if (this._request.method === HTTP_METHODS.CONNECT) { //ignore CONNECT method
+            --this._requestCounter;
+        }
+
+        if (body) {
+            this._request.body = (this._request.body || '') + body;
+        }
+
         return this._request;
     }
 
@@ -152,10 +165,10 @@ class Session extends Object {
         // const indexOfChunkEnd = buffer.toString().indexOf(LF + CRLF);
         // this._response.complete = indexOfChunkEnd; //TODO find a way to recognize last chunk
 
-        const parsedResponse = parseDataToObject(buffer, true, !!this._response.body);
-        if (this._response.body
-            && parsedResponse.body) {
-            parsedResponse.body = this._response.body + parsedResponse.body;
+        const parsedResponse = parseDataToObject(buffer, true, this._responseCounter > 0);
+        ++this._responseCounter;
+        if (parsedResponse.body) {
+            parsedResponse.body = (this._response.body || '') + parsedResponse.body;
         }
         this._response = {...this._response, ...parsedResponse};
 
