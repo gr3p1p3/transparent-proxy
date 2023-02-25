@@ -1,8 +1,11 @@
+const isRequestOfMethodType = require('../lib/isRequestOfMethodType');
+
 const tls = require('tls');
 const net = require('net');
-const {EVENTS, DEFAULT_KEYS} = require('../lib/constants');
 const {request, createServer} = require('http');
+const {EVENTS, DEFAULT_KEYS, HTTP_METHODS} = require('../lib/constants');
 const {CLOSE, DATA, ERROR} = EVENTS;
+const {CONNECT} = HTTP_METHODS;
 
 /**
  * Write data of given socket
@@ -111,10 +114,14 @@ class Session extends Object {
         this._src = socket;
         const mirror = new net.Socket()
         this._src.prependListener('data', data => {
-            if(!this.request || this.request.complete) {
-                this._requestPromise = new Promise(resolve => this._requestPromiseResolve = resolve)
+                if (!this.request || this.request.complete) {
+                    this._requestPromise = new Promise(resolve => this._requestPromiseResolve = resolve)
+                }
+            if (!this.isHttps || isRequestOfMethodType(CONNECT, data)) {
+                mirror.emit('data', data)
+            } else {
+                this._requestPromiseResolve()
             }
-            mirror.emit('data', data)
         })
         createServer()
             .on('connect', request => this.request = request)
@@ -131,14 +138,18 @@ class Session extends Object {
     setRequestSocket(socket) {
         this._dst = socket;
         const mirror = new net.Socket()
-        this._dst.prependListener('data', data => {
-            if(!this.response || this.response.complete){
-                this._responsePromise = new Promise(resolve => this._responsePromiseResolve = resolve)
-            }
-            mirror.emit('data', data)
-        })
-        request({ createConnection: () => mirror })
-            .on('response', response => this.response = response);
+        if (!this.isHttps) {
+            this._dst.prependListener('data', data => {
+                if (!this.response || this.response.complete) {
+                    this._responsePromise = new Promise(resolve => this._responsePromiseResolve = resolve)
+                }
+                mirror.emit('data', data);
+            })
+            request({ createConnection: () => mirror })
+                .on('response', response => this.response = response);
+        } else {
+            this._responsePromiseResolve()
+        }
         return this;
     }
 
