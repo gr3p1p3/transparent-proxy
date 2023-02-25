@@ -166,15 +166,18 @@ class Session extends Object {
 
     set response(buffer) {
         if (!this.isHttps || this._updated) { //parse only if data is not encrypted
-            // const indexOfChunkEnd = buffer.toString().indexOf(LF + CRLF);
-            // this._response.complete = indexOfChunkEnd; //TODO find a way to recognize last chunk
-
             const parsedResponse = parseDataToObject(buffer, true, this._responseCounter > 0);
             ++this._responseCounter;
             if (parsedResponse.body) {
                 parsedResponse.body = (this._response.body || '') + parsedResponse.body;
             }
             this._response = {...this._response, ...parsedResponse};
+
+            // TODO this will not work for every response
+            if (this._response.headers['content-length'] && this._response.body) {
+                const bodyBytes = Buffer.byteLength(this._response.body);
+                this._response.complete = parseInt(this._response.headers['content-length']) <= bodyBytes;
+            }
         }
         return this._response;
     }
