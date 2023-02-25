@@ -138,21 +138,24 @@ class Session extends Object {
     }
 
     set request(buffer) {
-        const parsedRequest = parseDataToObject(buffer, null, this._requestCounter > 0);
-        const body = parsedRequest.body;
-        delete parsedRequest.body;
+        if (!this.isHttps || this._updated) {  //parse only if data is not encrypted
+            const parsedRequest = parseDataToObject(buffer, null, this._requestCounter > 0);
+            const body = parsedRequest.body;
+            delete parsedRequest.body;
 
-        ++this._requestCounter;
-        if (parsedRequest.headers) {
-            this._request = parsedRequest;
-        }
-        if (this._request.method === HTTP_METHODS.CONNECT) { //ignore CONNECT method
-            --this._requestCounter;
+            ++this._requestCounter;
+            if (parsedRequest.headers) {
+                this._request = parsedRequest;
+            }
+            if (this._request.method === HTTP_METHODS.CONNECT) { //ignore CONNECT method
+                --this._requestCounter;
+            }
+
+            if (body) {
+                this._request.body = (this._request.body || '') + body;
+            }
         }
 
-        if (body) {
-            this._request.body = (this._request.body || '') + body;
-        }
 
         return this._request;
     }
@@ -162,16 +165,17 @@ class Session extends Object {
     }
 
     set response(buffer) {
-        // const indexOfChunkEnd = buffer.toString().indexOf(LF + CRLF);
-        // this._response.complete = indexOfChunkEnd; //TODO find a way to recognize last chunk
+        if (!this.isHttps || this._updated) { //parse only if data is not encrypted
+            // const indexOfChunkEnd = buffer.toString().indexOf(LF + CRLF);
+            // this._response.complete = indexOfChunkEnd; //TODO find a way to recognize last chunk
 
-        const parsedResponse = parseDataToObject(buffer, true, this._responseCounter > 0);
-        ++this._responseCounter;
-        if (parsedResponse.body) {
-            parsedResponse.body = (this._response.body || '') + parsedResponse.body;
+            const parsedResponse = parseDataToObject(buffer, true, this._responseCounter > 0);
+            ++this._responseCounter;
+            if (parsedResponse.body) {
+                parsedResponse.body = (this._response.body || '') + parsedResponse.body;
+            }
+            this._response = {...this._response, ...parsedResponse};
         }
-        this._response = {...this._response, ...parsedResponse};
-
         return this._response;
     }
 
