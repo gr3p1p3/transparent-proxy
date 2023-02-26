@@ -1,7 +1,8 @@
 const tls = require('tls');
-const {EVENTS, DEFAULT_KEYS, HTTP_METHODS} = require('../lib/constants');
+const {EVENTS, DEFAULT_KEYS, STRINGS, HTTP_METHODS} = require('../lib/constants');
 const parseDataToObject = require('../lib/parseDataToObject');
 const {CLOSE, DATA, ERROR} = EVENTS;
+const {CRLF} = STRINGS;
 
 /**
  * Write data of given socket
@@ -49,6 +50,8 @@ class Session extends Object {
         this._responseCounter = 0;
         this._isRequestPaused = false;
         this._isResponsePaused = false;
+
+        this._rawResponseBodyChunks = [];
     }
 
     _pauseRequest() {
@@ -167,6 +170,17 @@ class Session extends Object {
     set response(buffer) {
         if (!this.isHttps || this._updated) { //parse only if data is not encrypted
             const parsedResponse = parseDataToObject(buffer, true, this._responseCounter > 0);
+
+            if (!parsedResponse.headers) {
+                this.rawResponse = buffer; //pushing whole buffer, because there aren't headers here
+            }
+            else {
+                //found body from buffer without converting
+                const DOUBLE_CRLF = CRLF + CRLF;
+                const splitAt = buffer.indexOf(DOUBLE_CRLF, 0);
+                this.rawResponse = buffer.slice(splitAt + DOUBLE_CRLF.length);
+            }
+
             ++this._responseCounter;
             if (parsedResponse.body) {
                 parsedResponse.body = (this._response.body || '') + parsedResponse.body;
@@ -180,6 +194,14 @@ class Session extends Object {
             }
         }
         return this._response;
+    }
+
+    set rawResponse(buffer) {
+        this._rawResponseBodyChunks.push(buffer);
+    }
+
+    get rawResponse() {
+        return Buffer.concat(this._rawResponseBodyChunks);
     }
 
     get response() {
