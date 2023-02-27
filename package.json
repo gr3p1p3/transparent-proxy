@@ -1,6 +1,6 @@
 {
   "name": "@wwerner/transparent-proxy-beta",
-  "version": "1.11.7",
+  "version": "1.11.7-sni",
   "description": "Real transparent HTTP-Proxy-Server. Upstream your requests whatever you want!",
   "main": "ProxyServer.js",
   "scripts": {
