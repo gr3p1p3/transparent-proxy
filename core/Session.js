@@ -1,8 +1,8 @@
 const tls = require('tls');
-const {EVENTS, DEFAULT_KEYS, STRINGS} = require('../lib/constants');
+const {EVENTS, DEFAULT_KEYS, STRINGS, HTTP_METHODS} = require('../lib/constants');
 const parseDataToObject = require('../lib/parseDataToObject');
 const {CLOSE, DATA, ERROR} = EVENTS;
-const {BLANK, CRLF, LF, SEPARATOR} = STRINGS;
+const {CRLF} = STRINGS;
 
 /**
  * Write data of given socket
@@ -10,9 +10,12 @@ const {BLANK, CRLF, LF, SEPARATOR} = STRINGS;
  * @param data
  */
 function socketWrite(socket, data) {
-    if (socket && !socket.destroyed && data) {
-        socket.write(data);
-    }
+    return new Promise(function (resolve, reject) {
+        if (socket && !socket.destroyed && data) {
+            return socket.write(data, null, resolve);
+        }
+        return resolve(false);
+    });
 }
 
 /**
@@ -42,24 +45,49 @@ class Session extends Object {
         this.isHttps = false;
         this._request = {};
         this._response = {};
+
+        this._requestCounter = 0;
+        this._responseCounter = 0;
+        this._isRequestPaused = false;
+        this._isResponsePaused = false;
+
+        this._rawResponseBodyChunks = [];
+    }
+
+    _pauseRequest() {
+        this._dst.pause();
+        this._isRequestPaused = true;
+    }
+
+    _resumeRequest() {
+        this._dst.resume();
+        this._isRequestPaused = false;
+    }
+
+    _pauseResponse() {
+        this._src.pause();
+        this._isResponsePaused = true;
+    }
+
+    _resumeResponse() {
+        this._src.resume();
+        this._isResponsePaused = false;
     }
 
     /**
      * @param {buffer|string} data - The data to send.
      * @returns {Session}
      */
-    clientRequestWrite(data) {
-        socketWrite(this._dst, data);
-        return this;
+    async clientRequestWrite(data) {
+        return socketWrite(this._dst, data);
     }
 
     /**
      * @param {buffer|string} data - The data to send.
      * @returns {Session}
      */
-    clientResponseWrite(data) {
-        socketWrite(this._src, data);
-        return this;
+    async clientResponseWrite(data) {
+        return socketWrite(this._src, data);
     }
 
     /**
@@ -113,10 +141,25 @@ class Session extends Object {
     }
 
     set request(buffer) {
-        const parsedRequest = parseDataToObject(buffer);
-        if (parsedRequest.headers) {
-            this._request = parsedRequest;
+        if (!this.isHttps || this._updated) {  //parse only if data is not encrypted
+            const parsedRequest = parseDataToObject(buffer, null, this._requestCounter > 0);
+            const body = parsedRequest.body;
+            delete parsedRequest.body;
+
+            ++this._requestCounter;
+            if (parsedRequest.headers) {
+                this._request = parsedRequest;
+            }
+            if (this._request.method === HTTP_METHODS.CONNECT) { //ignore CONNECT method
+                --this._requestCounter;
+            }
+
+            if (body) {
+                this._request.body = (this._request.body || '') + body;
+            }
         }
+
+
         return this._request;
     }
 
@@ -125,17 +168,40 @@ class Session extends Object {
     }
 
     set response(buffer) {
-        // const indexOfChunkEnd = buffer.toString().indexOf(LF + CRLF);
-        // this._response.complete = indexOfChunkEnd; //TODO find a way to recognize last chunk
+        if (!this.isHttps || this._updated) { //parse only if data is not encrypted
+            const parsedResponse = parseDataToObject(buffer, true, this._responseCounter > 0);
 
-        const parsedResponse = parseDataToObject(buffer, true, !!this._response.body);
-        if (this._response.body
-            && parsedResponse.body) {
-            parsedResponse.body = this._response.body + parsedResponse.body;
+            if (!parsedResponse.headers) {
+                this.rawResponse = buffer; //pushing whole buffer, because there aren't headers here
+            }
+            else {
+                //found body from buffer without converting
+                const DOUBLE_CRLF = CRLF + CRLF;
+                const splitAt = buffer.indexOf(DOUBLE_CRLF, 0);
+                this.rawResponse = buffer.slice(splitAt + DOUBLE_CRLF.length);
+            }
+
+            ++this._responseCounter;
+            if (parsedResponse.body) {
+                parsedResponse.body = (this._response.body || '') + parsedResponse.body;
+            }
+            this._response = {...this._response, ...parsedResponse};
+
+            // TODO this will not work for every response
+            if (this._response.headers['content-length'] && this._response.body) {
+                const bodyBytes = Buffer.byteLength(this._response.body);
+                this._response.complete = parseInt(this._response.headers['content-length']) <= bodyBytes;
+            }
         }
-        this._response = {...this._response, ...parsedResponse};
-
         return this._response;
+    }
+
+    set rawResponse(buffer) {
+        this._rawResponseBodyChunks.push(buffer);
+    }
+
+    get rawResponse() {
+        return Buffer.concat(this._rawResponseBodyChunks);
     }
 
     get response() {
