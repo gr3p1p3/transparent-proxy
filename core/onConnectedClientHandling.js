@@ -36,7 +36,8 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
     const {
         upstream, tcpOutgoingAddress,
         injectData, injectResponse,
-        auth, intercept, keys
+        auth, intercept, keys,
+        handleSni
     } = options;
 
 
@@ -142,7 +143,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
                 ? keysObject
                 : undefined;
 
-            thisTunnel._updateSockets({onDataFromClient, onDataFromUpstream, onClose}, keyToUse);
+            thisTunnel._updateSockets({onDataFromClient, onDataFromUpstream, onClose, handleSni}, keyToUse);
         }
     }
 

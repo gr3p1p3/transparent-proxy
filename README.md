@@ -48,6 +48,7 @@ server.listen(8080, '0.0.0.0', function () {
 |[options.verbose] | <code>Boolean</code> |  Activate verbose mode. |
 |[options.intercept] | <code>Boolean</code> |  Activate interception of encrypted communications. False as default. |
 |[options.logger] | <code>Logger</code> |  Must be an object implementing `log(args[])` and `error(args[])`. Defaults to the [inbuilt logger](./lib/Logger.js) writing to the console if `verbose` is true.|
+|[options.handleSni] | <code>Function</code> | Pass SNICallback to be added to the server. See [SNICallback tls.createServer options](https://nodejs.org/api/tls.html#tlscreateserveroptions-secureconnectionlistener) |
 
 
 
@@ -199,6 +200,12 @@ If no object is returned, then [default keys](https://github.com/gr3p1p3/transpa
 
 *Note*: This function will be executed before TLS-Handshake.  
 
+## The `handleSNI` Function
+
+If passed a function, the proxy will call it to obtain the TLS secure context instead of using `keys`.
+
+From [tls.createServer](https://nodejs.org/api/tls.html#tlscreateserveroptions-secureconnectionlistener)
+    Two arguments will be passed when called: servername and callback. callback is an error-first callback that takes two optional arguments: error and ctx. ctx, if provided, is a SecureContext instance. tls.createSecureContext() can be used to get a proper SecureContext. If callback is called with a falsy ctx argument, the default secure context of the server will be used.
 
 #### Session-Instance
 

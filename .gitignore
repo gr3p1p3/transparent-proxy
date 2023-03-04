@@ -4,3 +4,5 @@ tests
 tests/*
 node_modules 
 package-lock.json
+.vscode
+.yarn.lock

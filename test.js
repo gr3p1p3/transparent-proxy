@@ -1,6 +1,8 @@
 const util = require('util');
+const tls = require('tls');
 const exec = util.promisify(require('child_process').exec);
 const ProxyServer = require('./ProxyServer');
+const forge = require('node-forge');
 
 async function test1() {
     console.log('Starting TEST1 - Normal Transparent-Proxy!');
@@ -245,7 +247,7 @@ async function test6() {
             console.log('transparent-proxy was started!', server.address());
 
             for (const singlePath of toTest) {
-                const cmd = 'curl' + ' -x 127.0.0.1:' + PORT + ' -k ' + singlePath;
+                const cmd = 'curl' + ' -vv -x 127.0.0.1:' + PORT + ' -k ' + singlePath;
                 console.log(cmd);
                 const {stdout, stderr} = await exec(cmd);
                 console.log('Response =>', stdout);
@@ -271,11 +273,11 @@ async function test7() {
 
     console.log('Starting Proxy Server with custom logger');
     let logs = [];
-    const loggerStub =  {
+    const loggerStub = {
         log(args) {
             logs.push(args)
         },
-        
+
         error(args) {
             logs.push(args)
         }
@@ -295,7 +297,7 @@ async function test7() {
                 const cmd = 'curl' + ' -x 127.0.0.1:' + PORT + ' -k ' + singlePath;
                 logs = [];
                 await exec(cmd);
-   
+
                 if (!logs.length) {
                     console.error('Url should have been written to logs', logs);
                     process.exit(7);
@@ -309,6 +311,75 @@ async function test7() {
     })
 }
 
+async function test8() {
+    console.log('Starting TEST8 - Use SNICallback');
+
+    const toTest = ['ifconfig.me', 'ifconfig.io']; //protocol will be append later
+
+    const PORT = 10008;
+
+    //init ProxyServer
+    const server = new ProxyServer({
+        verbose: true,
+        intercept: true,
+        handleSni: (hostname, callback) => {
+            console.log(`In SNI callback for ${hostname}`);
+            try {
+                const keypair = forge.rsa.generateKeyPair({bits: 2048, e: 0x10001});
+                const cert = forge.pki.createCertificate();
+                cert.publicKey = keypair.publicKey;
+
+                const attrs = [
+                    {
+                        name: 'organizationName',
+                        value: 'transparent-proxy',
+                    }
+                ];
+                cert.setIssuer(attrs);
+                cert.setSubject([
+                    ...attrs,
+                    {
+                        name: 'commonName',
+                        value: hostname,
+                    },
+                ]);
+
+                cert.sign(keypair.privateKey);
+                callback(null, tls.createSecureContext({
+                        key: forge.pki.privateKeyToPem(keypair.privateKey),
+                        cert: forge.pki.certificateToPem(cert)
+                    }
+                ))
+            }
+            catch (err) {
+                callback(err)
+            }
+        }
+    });
+
+    return new Promise(function (res, rej) {
+        server.listen(PORT, '0.0.0.0', async function () {
+            console.log('transparent-proxy was started!', server.address());
+
+            for (const domain of toTest) {
+                const cmd = 'curl' + ' -v -x 127.0.0.1:' + PORT + ' -k https://' + domain;
+                console.log(cmd);
+                const {stdout, stderr} = await exec(cmd);
+                console.log('Response =>', stdout);
+                console.log('Log =>', stderr);
+                if (!(stderr.includes('issuer: O=transparent-proxy') && stderr.includes(`CN=${domain}`))) {
+                    console.error(`Certificate issued by O=transparent-proxy for CN=${domain} expected`);
+                    process.exit(8);
+                }
+            }
+
+            console.log('Closing transparent-proxy Server - TEST8\n');
+            server.close();
+            res(true);
+        });
+    });
+}
+
 async function main() {
     await test1();
     await test2();
@@ -317,6 +388,7 @@ async function main() {
     await test5();
     await test6();
     await test7();
+    await test8();
 }
 
 return main();
