@@ -388,7 +388,7 @@ async function main() {
     await test5();
     await test6();
     await test7();
-    // await test8(); //TODO reactivate this, validation doesn't work with curl 7.64
+    // await test8(); //TODO reactivate this, validation doesn't work with curl 7.83
 }
 
 return main();
