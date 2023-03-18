@@ -16,7 +16,7 @@ class HttpMessage extends Object {
     }
 
     get headers() {
-        return this._data.headers;
+        return this._headers.toObject();
     }
 
     get body() {
@@ -24,11 +24,9 @@ class HttpMessage extends Object {
     }
 
     parseData(buffer, isResponse = false) {
+        const parsedData = parseDataToObject(buffer, isResponse, this._counter > 0);
         ++this._counter;
 
-        const parsedData = parseDataToObject(buffer, isResponse, this._counter > 0);
-
-        console.log('parsedData', parsedData)
         if (!parsedData.headers) {
             this._body.raw = buffer; //pushing whole buffer, because there aren't headers here
         }
@@ -36,20 +34,21 @@ class HttpMessage extends Object {
             //found body from buffer without converting
             const DOUBLE_CRLF = CRLF + CRLF;
             const splitAt = buffer.indexOf(DOUBLE_CRLF, 0);
+
+            this._headers.raw = parsedData.headers;
             this._body.raw = buffer.slice(splitAt + DOUBLE_CRLF.length);
         }
 
-        delete parsedData.body
-        if (parsedData.headers) {
-            this._data = {...this._data, ...parsedData};
-        }
+        delete parsedData.body; // don't need this because it is already parsed
+
+        this._data = {...this._data, ...parsedData};
 
         return parsedData;
     }
 
 
     toObject() {
-        return {...this._data, counter: this._counter, complete: this.complete, body: this.body};
+        return {...this._data, headers: this.headers, body: this.body, counter: this._counter, complete: this.complete};
     }
 }
 
@@ -66,9 +65,6 @@ class Request extends HttpMessage {
     parseData(buffer) {
         const parsedRequest = super.parseData(buffer);
 
-        if (parsedRequest.headers) {
-            this._data = parsedRequest;
-        }
         if (this._data.method === HTTP_METHODS.CONNECT) { //ignore CONNECT method
             --this._counter;
         }
@@ -89,8 +85,6 @@ class Response
     parseData(buffer) {
         const parsedResponse = super.parseData(buffer, true);
 
-        // this._data = {...this._data, ...parsedResponse};
-        console.log('this', this._data)
         // TODO this will not work for every response
         if (this._data.headers['content-length'] && this.body) {
             const bodyBytes = Buffer.byteLength(this.body);
@@ -104,22 +98,32 @@ class Response
 class Headers extends Object {
     constructor() {
         super();
+        this._raw = {}; //TODO empty Buffer as Default
+    }
+
+    set raw(object) {
+        this._raw = {...this._raw, ...object};
+        return this;
+    }
+
+    toObject() {
+        return this._raw;
     }
 }
 
 class Body extends Object {
     constructor() {
         super();
-        this._rawBodyChunks = [];
+        this._rawChunks = [];
     }
 
     set raw(buffer) {
-        this._rawBodyChunks.push(buffer);
+        this._rawChunks.push(buffer);
         return this;
     }
 
     get raw() {
-        return Buffer.concat(this._rawBodyChunks);
+        return Buffer.concat(this._rawChunks);
     }
 
     toString() {

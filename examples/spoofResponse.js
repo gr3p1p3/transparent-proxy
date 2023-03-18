@@ -8,9 +8,8 @@ const switchWithIp = 'bla.bla.bla.bla';
 
 const server = new ProxyServer({
     verbose: true,
+    intercept: false,
     injectResponse: (data, session) => {
-        console.log('Request was', session.request)
-        console.log('RESPONSE was', session.response)
         if (!session.isHttps && session.response.body) {
             //you can spoof here
             const modifiedData = data.toString()
@@ -32,7 +31,7 @@ server.listen(port, '0.0.0.0', async function () {
     console.log('transparent-proxy was started!', server.address());
 
     for (const singlePath of toTest) {
-        const cmd = 'curl' + ' -x localhost:' + port + ' ' + singlePath;
+        const cmd = 'curl' + ' -k -x localhost:' + port + ' ' + singlePath;
         console.log(cmd);
         const {stdout, stderr} = await exec(cmd);
         console.log('Response =>', stdout);

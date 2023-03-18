@@ -47,8 +47,8 @@ class Session extends Object {
         this._request = new Request();
         this._response = new Response();
 
-        this._requestCounter = 0;
-        this._responseCounter = 0;
+        this._requestCounter = this._request._counter;
+        this._responseCounter = this._response._counter;
         this._isRequestPaused = false;
         this._isResponsePaused = false;
 
