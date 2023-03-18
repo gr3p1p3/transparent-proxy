@@ -24,8 +24,11 @@ class HttpMessage extends Object {
     }
 
     parseData(buffer, isResponse = false) {
+        ++this._counter;
+
         const parsedData = parseDataToObject(buffer, isResponse, this._counter > 0);
 
+        console.log('parsedData', parsedData)
         if (!parsedData.headers) {
             this._body.raw = buffer; //pushing whole buffer, because there aren't headers here
         }
@@ -36,15 +39,10 @@ class HttpMessage extends Object {
             this._body.raw = buffer.slice(splitAt + DOUBLE_CRLF.length);
         }
 
-        const body = parsedData.body;
-        delete parsedData.body;
-
-        ++this._counter;
-        // if (parsedData.body) {
-        //     parsedData.body = this.body + parsedData.body;
-        // }
-
-        // this._data = {...this._data, ...parsedData};
+        delete parsedData.body
+        if (parsedData.headers) {
+            this._data = {...this._data, ...parsedData};
+        }
 
         return parsedData;
     }
@@ -91,8 +89,8 @@ class Response
     parseData(buffer) {
         const parsedResponse = super.parseData(buffer, true);
 
-        this._data = {...this._data, ...parsedResponse};
-
+        // this._data = {...this._data, ...parsedResponse};
+        console.log('this', this._data)
         // TODO this will not work for every response
         if (this._data.headers['content-length'] && this.body) {
             const bodyBytes = Buffer.byteLength(this.body);
