@@ -35,7 +35,7 @@ class HttpMessage extends Object {
             const DOUBLE_CRLF = CRLF + CRLF;
             const splitAt = buffer.indexOf(DOUBLE_CRLF, 0);
 
-            this._headers.raw = parsedData.headers;
+            this._headers.raw = parsedData.headers; //TODO make something like body => buffer.slice(0,splitAt);
             this._body.raw = buffer.slice(splitAt + DOUBLE_CRLF.length);
         }
 
