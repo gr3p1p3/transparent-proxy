@@ -9,6 +9,8 @@ const switchWithIp = 'bla.bla.bla.bla';
 const server = new ProxyServer({
     verbose: true,
     injectResponse: (data, session) => {
+        console.log('Request was', session.request)
+        console.log('RESPONSE was', session.response)
         if (!session.isHttps && session.response.body) {
             //you can spoof here
             const modifiedData = data.toString()
