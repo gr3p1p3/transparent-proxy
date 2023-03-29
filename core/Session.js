@@ -52,7 +52,6 @@ class Session extends Object {
         this._isRequestPaused = false;
         this._isResponsePaused = false;
 
-        this._rawResponseBodyChunks = [];
     }
 
     _pauseRequest() {
@@ -158,10 +157,6 @@ class Session extends Object {
         }
         return this._response;
     }
-
-    // set rawResponse(buffer) {
-    //     this._rawResponseBodyChunks.push(buffer);
-    // }
 
     get rawResponse() {
         return this._response._body.raw;
