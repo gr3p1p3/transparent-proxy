@@ -96,9 +96,11 @@ class Session extends Object {
      */
     destroy() {
         if (this._dst) {
+            // this._request.complete = true; // TODO here request should be complete
             socketDestroy(this._dst);
         }
         if (this._src) {
+            // this._response.complete = true; // TODO here response should be complete
             socketDestroy(this._src);
         }
         return this;
