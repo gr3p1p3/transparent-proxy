@@ -1,6 +1,7 @@
 const tls = require('tls');
-const {EVENTS, DEFAULT_KEYS, STRINGS, HTTP_METHODS} = require('../lib/constants');
 const parseDataToObject = require('../lib/parseDataToObject');
+const {Request, Response} = require('./HttpMessage');
+const {EVENTS, DEFAULT_KEYS, STRINGS, HTTP_METHODS} = require('../lib/constants');
 const {CLOSE, DATA, ERROR} = EVENTS;
 const {CRLF} = STRINGS;
 
@@ -43,15 +44,14 @@ class Session extends Object {
         this.user = null;
         this.authenticated = false;
         this.isHttps = false;
-        this._request = {};
-        this._response = {};
+        this._request = new Request();
+        this._response = new Response();
 
-        this._requestCounter = 0;
-        this._responseCounter = 0;
+        this._requestCounter = this._request._counter;
+        this._responseCounter = this._response._counter;
         this._isRequestPaused = false;
         this._isResponsePaused = false;
 
-        this._rawResponseBodyChunks = [];
     }
 
     _pauseRequest() {
@@ -96,9 +96,11 @@ class Session extends Object {
      */
     destroy() {
         if (this._dst) {
+            // this._request.complete = true; // TODO here request should be complete
             socketDestroy(this._dst);
         }
         if (this._src) {
+            // this._response.complete = true; // TODO here response should be complete
             socketDestroy(this._src);
         }
         return this;
@@ -142,70 +144,28 @@ class Session extends Object {
 
     set request(buffer) {
         if (!this.isHttps || this._updated) {  //parse only if data is not encrypted
-            const parsedRequest = parseDataToObject(buffer, null, this._requestCounter > 0);
-            const body = parsedRequest.body;
-            delete parsedRequest.body;
-
-            ++this._requestCounter;
-            if (parsedRequest.headers) {
-                this._request = parsedRequest;
-            }
-            if (this._request.method === HTTP_METHODS.CONNECT) { //ignore CONNECT method
-                --this._requestCounter;
-            }
-
-            if (body) {
-                this._request.body = (this._request.body || '') + body;
-            }
+            this._request.parseData(buffer);
         }
-
-
         return this._request;
     }
 
     get request() {
-        return this._request;
+        return this._request.toObject();
     }
 
     set response(buffer) {
         if (!this.isHttps || this._updated) { //parse only if data is not encrypted
-            const parsedResponse = parseDataToObject(buffer, true, this._responseCounter > 0);
-
-            if (!parsedResponse.headers) {
-                this.rawResponse = buffer; //pushing whole buffer, because there aren't headers here
-            }
-            else {
-                //found body from buffer without converting
-                const DOUBLE_CRLF = CRLF + CRLF;
-                const splitAt = buffer.indexOf(DOUBLE_CRLF, 0);
-                this.rawResponse = buffer.slice(splitAt + DOUBLE_CRLF.length);
-            }
-
-            ++this._responseCounter;
-            if (parsedResponse.body) {
-                parsedResponse.body = (this._response.body || '') + parsedResponse.body;
-            }
-            this._response = {...this._response, ...parsedResponse};
-
-            // TODO this will not work for every response
-            if (this._response.headers['content-length'] && this._response.body) {
-                const bodyBytes = Buffer.byteLength(this._response.body);
-                this._response.complete = parseInt(this._response.headers['content-length']) <= bodyBytes;
-            }
+            this._response.parseData(buffer);
         }
         return this._response;
     }
 
-    set rawResponse(buffer) {
-        this._rawResponseBodyChunks.push(buffer);
-    }
-
     get rawResponse() {
-        return Buffer.concat(this._rawResponseBodyChunks);
+        return this._response._body.raw;
     }
 
     get response() {
-        return this._response;
+        return this._response.toObject();
     }
 
     /**
@@ -247,7 +207,7 @@ class Session extends Object {
      * @private
      */
     _updateSockets(callbacksObject, KEYS = DEFAULT_KEYS) {
-        const { onDataFromClient, onDataFromUpstream, onClose, handleSni } =
+        const {onDataFromClient, onDataFromUpstream, onClose, handleSni} =
             callbacksObject;
 
         if (!this._updated) {
