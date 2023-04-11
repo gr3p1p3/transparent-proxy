@@ -3,9 +3,8 @@ const parseDataToObject = require('../lib/parseDataToObject');
 const {CRLF} = STRINGS;
 
 
-class HttpMessage extends Object {
+class HttpMessage {
     constructor() {
-        super();
         this._headers = new Headers();
         this._body = new Body();
 
@@ -63,7 +62,7 @@ class Request extends HttpMessage {
     }
 
     parseData(buffer) {
-        const parsedRequest = super.parseData(buffer);
+        super.parseData(buffer);
 
         if (this._data.method === HTTP_METHODS.CONNECT) { //ignore CONNECT method
             --this._counter;
@@ -83,10 +82,10 @@ class Response
     }
 
     parseData(buffer) {
-        const parsedResponse = super.parseData(buffer, true);
+        super.parseData(buffer, true);
 
         // TODO this will not work for every response
-        if (this._data.headers['content-length'] && this.body) {
+        if (this._data?.headers['content-length'] && this.body) {
             const bodyBytes = Buffer.byteLength(this.body);
             this.complete = parseInt(this._data.headers['content-length']) <= bodyBytes;
         }
@@ -95,9 +94,8 @@ class Response
     }
 }
 
-class Headers extends Object {
+class Headers {
     constructor() {
-        super();
         this._raw = {}; //TODO empty Buffer as Default
     }
 
@@ -111,9 +109,8 @@ class Headers extends Object {
     }
 }
 
-class Body extends Object {
+class Body {
     constructor() {
-        super();
         this._rawChunks = [];
     }
 
