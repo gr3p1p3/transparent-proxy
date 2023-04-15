@@ -27,6 +27,7 @@ class HttpMessage {
         ++this._counter;
 
         if (!parsedData.headers) {
+            // this is needed for multiple-chunks request
             this._body.raw = buffer; //pushing whole buffer, because there aren't headers here
         }
         else {
@@ -35,7 +36,7 @@ class HttpMessage {
             const splitAt = buffer.indexOf(DOUBLE_CRLF, 0);
 
             this._headers.raw = parsedData.headers; //TODO make something like body to save original data of headers => buffer.slice(0,splitAt);
-            this._body.raw = buffer.slice(splitAt + DOUBLE_CRLF.length);
+            this._body.raw = buffer.slice(splitAt + DOUBLE_CRLF.length); // push the body-buffer
         }
 
         delete parsedData.body; // don't need this because it is already parsed
@@ -57,8 +58,6 @@ class Request extends HttpMessage {
         this.method = null;
         this.path = null;
         this.version = null;
-
-        this._data = {};
     }
 
     parseData(buffer) {
@@ -81,6 +80,11 @@ class Response
         this.statusText = null;
     }
 
+    /**
+     *
+     * @param buffer
+     * @returns {{headers: *, counter: number, body: *, complete: boolean}}
+     */
     parseData(buffer) {
         super.parseData(buffer, true);
 
@@ -99,11 +103,20 @@ class Headers {
         this._raw = {}; //TODO empty Buffer as Default
     }
 
+    /**
+     * Merge all Headers info in case of multiple requests
+     * @param object
+     * @returns {Headers}
+     */
     set raw(object) {
-        this._raw = {...this._raw, ...object};
+        this._raw = {...this._raw, ...object}; //TODO handle with buffer instead
         return this;
     }
 
+    /**
+     * Get the collected Headers asObject
+     * @returns {Object}
+     */
     toObject() {
         return this._raw;
     }
@@ -114,15 +127,28 @@ class Body {
         this._rawChunks = [];
     }
 
+    /**
+     * Push Buffer of Http-Body in case of multiple chunks
+     * @param {Buffer} buffer - The buffer of Http-Body
+     * @returns {Body}
+     */
     set raw(buffer) {
         this._rawChunks.push(buffer);
         return this;
     }
 
+    /**
+     * Get the total collected Buffer of Http-Body
+     * @returns {Buffer}
+     */
     get raw() {
         return Buffer.concat(this._rawChunks);
     }
 
+    /**
+     * Get the collected Http-Body as String
+     * @returns {string}
+     */
     toString() {
         return this.raw.toString();
     }
