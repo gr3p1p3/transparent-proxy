@@ -85,7 +85,7 @@ class Response
         super.parseData(buffer, true);
 
         // TODO this will not work for every response
-        if (this._data?.headers['content-length'] && this.body) {
+        if (this._data?.headers?.['content-length'] && this.body) {
             const bodyBytes = Buffer.byteLength(this.body);
             this.complete = parseInt(this._data.headers['content-length']) <= bodyBytes;
         }

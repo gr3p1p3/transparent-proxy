@@ -207,7 +207,7 @@ If passed a function, the proxy will call it to obtain the TLS secure context in
 From [tls.createServer](https://nodejs.org/api/tls.html#tlscreateserveroptions-secureconnectionlistener)
     Two arguments will be passed when called: servername and callback. callback is an error-first callback that takes two optional arguments: error and ctx. ctx, if provided, is a SecureContext instance. tls.createSecureContext() can be used to get a proper SecureContext. If callback is called with a falsy ctx argument, the default secure context of the server will be used.
 
-#### Session-Instance
+## Session-Instance
 
 The Session-Instance is an Object containing info/data about Tunnel.
 It has following useful attributes and methods:
