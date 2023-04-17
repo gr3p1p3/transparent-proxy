@@ -10,15 +10,21 @@
   "keywords": [
     "proxy",
     "tunnel",
+    "ssl",
     "http-proxy",
     "mitm",
+    "pinning",
     "proxy-authentication",
     "transparent",
     "upstream",
     "server",
     "squid",
     "privoxy",
-    "tcp"
+    "tcp",
+    "intercept",
+    "stealth",
+    "scraping",
+    "crawling"
   ],
   "author": "gr3p",
   "license": "ISC",
