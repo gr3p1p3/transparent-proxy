@@ -9,6 +9,7 @@ const server = new ProxyServer({
     verbose: true,
     intercept: true,
     injectResponse: (data, session) => {
+        console.log(session.response.complete, session.response.headers)
         if (session.response.complete //if response is finished
             && session.response.headers['content-encoding'] === 'gzip') { //body is gzip
             const zlib = require('zlib');

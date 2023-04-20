@@ -2,7 +2,7 @@ const tls = require('tls');
 const {EVENTS, DEFAULT_KEYS, STRINGS, HTTP_METHODS} = require('../lib/constants');
 const parseDataToObject = require('../lib/parseDataToObject');
 const {CLOSE, DATA, ERROR} = EVENTS;
-const {CRLF} = STRINGS;
+const {CRLF, TRANSFER_ENCODING, CONTENT_LENGTH, CHUNKED, ZERO} = STRINGS;
 
 /**
  * Write data of given socket
@@ -184,13 +184,12 @@ class Session {
             }
             this._response = {...this._response, ...parsedResponse};
 
-            if (this._response?.headers?.['content-length'] && this._response?.body) {
+            if (this._response?.headers?.[CONTENT_LENGTH] && this._response?.body) {
                 const bodyBytes = Buffer.byteLength(this._response.body);
-                this._response.complete = parseInt(this._response.headers['content-length']) <= bodyBytes;
+                this._response.complete = parseInt(this._response.headers[CONTENT_LENGTH]) <= bodyBytes;
             }
-            if (this._response?.headers?.['transfer-encoding'] === 'chunked' && this._response?.body) {
-                const end = '0' + CRLF + CRLF;
-                this._response.complete = buffer.indexOf(end) > -1;
+            if (this._response?.headers?.[TRANSFER_ENCODING] === CHUNKED && this._response?.body) {
+                this._response.complete = buffer.indexOf(ZERO + CRLF + CRLF) > -1;
             }
         }
         return this._response;
