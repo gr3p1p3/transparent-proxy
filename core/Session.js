@@ -184,10 +184,13 @@ class Session {
             }
             this._response = {...this._response, ...parsedResponse};
 
-            // TODO this will not work for every response, need to find a way to do this
             if (this._response?.headers?.['content-length'] && this._response?.body) {
                 const bodyBytes = Buffer.byteLength(this._response.body);
                 this._response.complete = parseInt(this._response.headers['content-length']) <= bodyBytes;
+            }
+            if (this._response?.headers?.['transfer-encoding'] === 'chunked' && this._response?.body) {
+                const end = '0' + CRLF + CRLF;
+                this._response.complete = buffer.indexOf(end) > -1;
             }
         }
         return this._response;
