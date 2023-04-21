@@ -182,7 +182,7 @@ class Session {
             if (parsedResponse.body) {
                 parsedResponse.body = (this._response.body || '') + parsedResponse.body;
             }
-            this._response = {...this._response, ...parsedResponse};
+            this._response = Object.assign({}, this._response, parsedResponse);
 
             if (this._response?.headers?.[CONTENT_LENGTH] && this._response?.body) {
                 const bodyBytes = Buffer.byteLength(this._response.body);
