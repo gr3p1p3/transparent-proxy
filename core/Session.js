@@ -3,6 +3,7 @@ const {EVENTS, DEFAULT_KEYS, STRINGS, HTTP_METHODS} = require('../lib/constants'
 const parseDataToObject = require('../lib/parseDataToObject');
 const {CLOSE, DATA, ERROR} = EVENTS;
 const {CRLF, TRANSFER_ENCODING, CONTENT_LENGTH, CHUNKED, ZERO} = STRINGS;
+const NOT_HEX_VALUE = /[^0-9A-Fa-f]/g;
 
 /**
  * Write data of given socket
@@ -179,9 +180,6 @@ class Session {
             }
 
             ++this._responseCounter;
-            if (parsedResponse.body) {
-                parsedResponse.body = (this._response.body || '') + parsedResponse.body;
-            }
             this._response = Object.assign({}, this._response, parsedResponse);
 
             if (this._response?.headers?.[CONTENT_LENGTH] && this._response?.body) {
@@ -196,7 +194,38 @@ class Session {
     }
 
     set rawResponse(buffer) {
-        this._rawResponseBodyChunks.push(buffer);
+        const bufferToPush = Buffer.from(buffer);
+        const splitAt = bufferToPush.indexOf(CRLF);
+        if (splitAt > -1) {
+            //handling transfer-encoding: chunked
+            // each chunk contains info like:
+            // chunk length in hex\r\n
+            // chunk\r\n
+            const infoPairs = bufferToPush.toString().split(CRLF, 50);
+            for (let i = 0; i < infoPairs.length; i++) {
+                const info = infoPairs[i];
+                if (i % 2) {
+                    //chunk to push here
+                    this._rawResponseBodyChunks.push(Buffer.from(info));
+                }
+                else {
+                    if (!!info) {
+                        //info should be an hex-value
+                        const chunkLength = parseInt(info, 16);
+                        if (!Number.isInteger(chunkLength)) { //if this is not a number, then it is a normal chunk
+                            this._rawResponseBodyChunks.push(Buffer.from(info));
+                        }
+                        else if (info.match(NOT_HEX_VALUE)) { //if it isn't an hex value
+                            //then it was a CRLF on body that need to be added
+                            this._rawResponseBodyChunks.push(Buffer.from(CRLF + info));
+                        }
+                    }
+                }
+            }
+            return;
+        }
+
+        this._rawResponseBodyChunks.push(bufferToPush);
     }
 
     get rawResponse() {
@@ -204,7 +233,7 @@ class Session {
     }
 
     get response() {
-        return this._response;
+        return Object.assign({}, this._response, {body: this.rawResponse.toString()});
     }
 
     /**
