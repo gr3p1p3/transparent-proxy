@@ -71,6 +71,11 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
                 // case EPROTO:
                 //     // thisTunnel.clientResponseWrite(NOT_OK + DOUBLE_CLRF + HTTP_BODIES.NOT_FOUND);
                 //     break;
+                case HTTP_BODIES.AUTH_REQUIRED:
+                    if (thisTunnel) {
+                        thisTunnel.clientResponseWrite(AUTH_REQUIRED + DOUBLE_CLRF + HTTP_BODIES.AUTH_REQUIRED);
+                    }
+                    break;
                 default:
                     //log all unhandled errors
                     logger.error(remoteID, err);
@@ -296,12 +301,16 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
 
                         if (isLogged) {
                             thisTunnel.setUserAuthentication(username);
-                            return handleProxyTunnel(split, data);
+                            const headers = Object.assign({}, thisTunnel.request.headers);
+                            delete headers[PROXY_AUTH.toLowerCase()];
+                            const newData = rebuildHeaders(headers, data);
+                            return handleProxyTunnel(split, newData);
                         }
                         else {
                             //return auth-error and close all
-                            await thisTunnel.clientResponseWrite(AUTH_REQUIRED + DOUBLE_CLRF + HTTP_BODIES.AUTH_REQUIRED);
-                            return onClose();
+                            const error = new Error(HTTP_BODIES.AUTH_REQUIRED);
+                            error.code = HTTP_BODIES.AUTH_REQUIRED;
+                            return onClose(error);
                         }
                     }
                     else {

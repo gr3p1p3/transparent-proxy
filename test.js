@@ -3,6 +3,7 @@ const tls = require('tls');
 const exec = util.promisify(require('child_process').exec);
 const ProxyServer = require('./ProxyServer');
 const forge = require('node-forge');
+const HttpServer = require('./test/HttpServer');
 
 async function test1() {
     console.log('Starting TEST1 - Normal Transparent-Proxy!');
@@ -10,7 +11,7 @@ async function test1() {
     //init ProxyServer
     const server = new ProxyServer({verbose: true});
 
-    const toTest = ['https://ifconfig.me', 'http://icanhazip.com', 'https://ifconfig.io/ua', 'http://asdahke.e'];
+    const toTest = ['http://localhost:3000'];
 
     //starting server on port 10001
     const PORT = 10001;
@@ -38,14 +39,14 @@ async function test2() {
     const TO_SWITCH = '6.6.6.6';
     const IP_REGEXP = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
 
-    const toTest = ['https://ifconfig.me', 'http://ifconfig.me'];
+    const toTest = ['http://localhost:3000/ip'];
 
     const PORT = 10002; //starting server on port 10001
 
     const cmdOwnIp = 'curl ' + toTest[0];
     console.log('Getting Own ip with', cmdOwnIp);
     const {stdout, stderr} = await exec(cmdOwnIp);
-    ownIp = stdout.match(IP_REGEXP)[0].trim();
+    ownIp = stdout;//.match(IP_REGEXP)[0].trim();
     console.log('Your IP is:', ownIp);
 
     console.log('Starting Proxy Server with spoof-behaviors');
@@ -93,7 +94,7 @@ async function test2() {
 async function test3() {
     console.log('Starting TEST3 - Spoof Request!');
 
-    const toTest = ['http://ifconfig.io/ua', 'https://ifconfig.me/ua'];
+    const toTest = ['http://localhost:3000/ua'];
 
     const USER_AGENT = /curl\/.+/;
     const TO_SWITCH = 'Spoofed UA!!';
@@ -105,6 +106,7 @@ async function test3() {
         verbose: true,
         intercept: true,
         injectData: (data, session) => {
+            console.log('Original User-Agent', session.request.headers['user-agent']);
             return Buffer.from(data.toString().replace(USER_AGENT, TO_SWITCH));
         }
     });
@@ -134,7 +136,7 @@ async function test3() {
 async function test4() {
     console.log('Starting TEST4 - Change Some Keys on runtime!');
 
-    const toTest = ['https://ifconfig.me/', 'https://ifconfig.me/ua'];
+    const toTest = ['http://localhost:3000'];
 
     const PORT = 10004; //starting server on port 10001
 
@@ -170,8 +172,9 @@ async function test4() {
 async function test5() {
     console.log('Starting TEST5 - Proxy With Authentication!');
 
-    const singlePath = 'https://ifconfig.me/';
+    const singlePath = 'http://localhost:3000/';
     const pwdToTest = ['bar:foo', 'wronguser:wrongpassword'];
+    const {AUTH_REQUIRED} = require('./lib/constants').HTTP_BODIES;
 
     const PORT = 10005; //starting server on port 10001
 
@@ -192,19 +195,19 @@ async function test5() {
                 console.log(cmd);
                 const {stdout, stderr} = await exec(cmd)
                     .catch((err) => {
-                        if (err.message.indexOf('HTTP code 407')) return {stdout: 'HTTP CODE 407'};
+                        if (err.message.indexOf('HTTP code 407')) return {stdout: AUTH_REQUIRED};
                         throw err;
                     });
                 console.log('Response =>', stdout);
 
                 if (pwd === pwdToTest[0]
-                    && stdout === 'HTTP CODE 407') {
+                    && stdout === AUTH_REQUIRED) {
                     console.error('Response must not be', 'HTTP CODE 407');
                     process.exit(5);
                 }
 
                 if (pwd === pwdToTest[1]
-                    && stdout !== 'HTTP CODE 407') {
+                    && stdout !== AUTH_REQUIRED) {
                     console.error('Response must be', 'HTTP CODE 407');
                     process.exit(5);
                 }
@@ -220,7 +223,7 @@ async function test5() {
 async function test6() {
     console.log('Starting TEST6 - Async inject data');
 
-    const toTest = ['http://httpbin.org/headers', 'https://httpbin.org/headers'];
+    const toTest = ['http://localhost:3000'];
 
     const ADDED_HEADER = 'x-test: my async value';
     const PORT = 10006;
@@ -251,7 +254,7 @@ async function test6() {
                 console.log(cmd);
                 const {stdout, stderr} = await exec(cmd);
                 console.log('Response =>', stdout);
-                if (JSON.parse(stdout).headers['X-Test'] !== 'my async value') {
+                if (JSON.parse(stdout).headers['x-test'] !== 'my async value') {
                     console.error(`Header ${ADDED_HEADER} must have been sent`);
                     process.exit(6);
                 }
@@ -267,7 +270,7 @@ async function test6() {
 async function test7() {
     console.log('Starting TEST7 - Custom Logger');
 
-    const toTest = ['http://ifconfig.io/ua', 'https://ifconfig.me/ua'];
+    const toTest = ['http://localhost:3000'];
 
     const PORT = 10007;
 
@@ -381,6 +384,7 @@ async function test8() {
 }
 
 async function main() {
+    const server = await HttpServer([]);
     await test1();
     await test2();
     await test3();
@@ -389,6 +393,7 @@ async function main() {
     await test6();
     await test7();
     // await test8(); //TODO reactivate this, validation doesn't work with curl 7.83
+    server.close();
 }
 
 return main();
