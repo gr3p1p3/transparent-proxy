@@ -106,7 +106,10 @@ async function test3() {
         verbose: true,
         intercept: true,
         injectData: (data, session) => {
-            console.log('Original User-Agent', session.request.headers['user-agent']);
+            if(!session.request.headers?.['user-agent']?.match(USER_AGENT)) {
+                console.error('Original User-Agent', session.request.headers['user-agent']);
+                process.exit(3);
+            }
             return Buffer.from(data.toString().replace(USER_AGENT, TO_SWITCH));
         }
     });
