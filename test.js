@@ -11,7 +11,7 @@ async function test1() {
     //init ProxyServer
     const server = new ProxyServer({verbose: true});
 
-    const toTest = ['http://localhost:3000'];
+    const toTest = ['http://localhost:3000', 'http://localhost:3000/notFound'];
 
     //starting server on port 10001
     const PORT = 10001;
@@ -106,7 +106,7 @@ async function test3() {
         verbose: true,
         intercept: true,
         injectData: (data, session) => {
-            if(!session.request.headers?.['user-agent']?.match(USER_AGENT)) {
+            if (!session.request.headers?.['user-agent']?.match(USER_AGENT)) {
                 console.error('Original User-Agent', session.request.headers['user-agent']);
                 process.exit(3);
             }
@@ -139,7 +139,7 @@ async function test3() {
 async function test4() {
     console.log('Starting TEST4 - Change Some Keys on runtime!');
 
-    const toTest = ['http://localhost:3000'];
+    const toTest = ['http://localhost:3000']; //TODO need https for this
 
     const PORT = 10004; //starting server on port 10001
 
