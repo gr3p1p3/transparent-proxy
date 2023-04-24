@@ -220,13 +220,13 @@ The Session-Instance is an Object containing info/data about Tunnel.
 It has following useful attributes and methods:
 
 - {boolean} isHttps - Is session encrypted.
-- {object} request - The Request-Object containing info about current request. Normally defined on both `injectData` & `injectResponse` Callbacks
-   - {object} request.headers - The intercepted request headers
-   - {string|undefined} [request.body] - The intercepted request body
-- {object} response - The Response-Object containing info about current response. Normally defined on `injectResponse` Callback
-   - {object} response.headers - The intercepted response headers
-   - {string} response.body - The intercepted response body. It could be empty.
-   - {boolean} response.complete - is response completely done
+- {object} request - The Request-Object containing info about current request. Normally defined on both `injectData` & `injectResponse` Callbacks. Attributes exist only if Session is not encrypted.
+   - {object} [request.headers] - The intercepted request headers.
+   - {string|undefined} [request.body] - The intercepted request body. 
+- {object} response - The Response-Object containing info about current response. Normally defined on `injectResponse` Callback. Attributes exist only if Session is not encrypted.
+   - {object} [response.headers] - The intercepted response headers.
+   - {string} [response.body] - The intercepted response body.
+   - {boolean} [response.complete] - is response completely done.
 - {buffer} rawResponse - The original body buffer.
 
 - {object} getTunnelStats() - Get Stats for this tunnel
