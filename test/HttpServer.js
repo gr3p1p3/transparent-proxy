@@ -4,10 +4,11 @@
  * @returns {Promise<server>}
  */
 module.exports = function startServer(tests) {
+    const {DEFAULT_KEYS} = require('../lib/constants');
     const zlib = require('zlib');
     const express = require('express');
     const app = express();
-
+    const PORT = 3000;
     app.get('/', function (req, res) {
         const responseObject = Object.assign({}, {headers: req.headers}, {ip: req.socket.remoteAddress});
         res.json(responseObject).end();
@@ -42,10 +43,21 @@ module.exports = function startServer(tests) {
     });
 
     return new Promise((resolve, reject) => {
-        const server = app.listen(3000, (err) => {
+        const server = app.listen(PORT, (err) => {
             if (err) reject(err);
             console.log('HttpServer is listening on 3000');
-            resolve(server);
+
+            const https = require('https');
+            const serverHttps = https.createServer({key: DEFAULT_KEYS.key, cert: DEFAULT_KEYS.cert}, app)
+                .listen(PORT + 1, function (err) {
+                    console.log('HttpsServer is listening on 3001');
+                    const close = ()=> {
+                        server.close();
+                        serverHttps.close();
+                    };
+                    resolve(Object.assign({}, server, {close}));
+                });
+
         });
     });
 };

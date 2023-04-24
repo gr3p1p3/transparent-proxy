@@ -11,7 +11,7 @@ async function test1() {
     //init ProxyServer
     const server = new ProxyServer({verbose: true});
 
-    const toTest = ['http://localhost:3000', 'http://localhost:3000/notFound'];
+    const toTest = ['http://localhost:3000', 'http://localhost:3000/notFound',];
 
     //starting server on port 10001
     const PORT = 10001;
@@ -39,7 +39,7 @@ async function test2() {
     const TO_SWITCH = '6.6.6.6';
     const IP_REGEXP = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
 
-    const toTest = ['http://localhost:3000/ip'];
+    const toTest = ['http://localhost:3000/ip', 'https://localhost:3001/ip'];
 
     const PORT = 10002; //starting server on port 10001
 
@@ -94,7 +94,7 @@ async function test2() {
 async function test3() {
     console.log('Starting TEST3 - Spoof Request!');
 
-    const toTest = ['http://localhost:3000/ua'];
+    const toTest = ['http://localhost:3000/ua', 'https://localhost:3001/ua'];
 
     const USER_AGENT = /curl\/.+/;
     const TO_SWITCH = 'Spoofed UA!!';
@@ -139,7 +139,7 @@ async function test3() {
 async function test4() {
     console.log('Starting TEST4 - Change Some Keys on runtime!');
 
-    const toTest = ['http://localhost:3000']; //TODO need https for this
+    const toTest = ['https://localhost:3001']; //TODO need https for this
 
     const PORT = 10004; //starting server on port 10001
 
@@ -226,7 +226,7 @@ async function test5() {
 async function test6() {
     console.log('Starting TEST6 - Async inject data');
 
-    const toTest = ['http://localhost:3000'];
+    const toTest = ['http://localhost:3000', 'https://localhost:3001'];
 
     const ADDED_HEADER = 'x-test: my async value';
     const PORT = 10006;
@@ -388,7 +388,7 @@ async function test8() {
 
 async function test9() {
     console.log('Starting TEST9 - Use Gzip with Transfer');
-    const toTest = ['http://localhost:3000/gzip-chunked'];
+    const toTest = ['http://localhost:3000/gzip-chunked', 'https://localhost:3001/gzip-chunked'];
     const MUST_BE = '{response:"ok"}';
 
     const server = new ProxyServer({
