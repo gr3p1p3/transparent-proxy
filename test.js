@@ -399,6 +399,7 @@ async function test9() {
                 console.log('Response is completed');
                 const zlib = require('zlib');
                 zlib.gunzip(session.rawResponse, function (err, decoded) {
+                    console.log('Decoded is', decoded.toString());
                     if (decoded.toString() !== MUST_BE) {
                         console.error('Decoded is not', MUST_BE, 'but is', decoded.toString());
                         process.exit(9);
@@ -411,17 +412,19 @@ async function test9() {
     });
 
     const port = 10009;
-    //starting server on port 10009
-    server.listen(port, '0.0.0.0', async function () {
-        console.log('transparent-proxy was started!', server.address());
+    return new Promise(function (res, rej) {
+        //starting server on port 10009
+        server.listen(port, '0.0.0.0', async function () {
+            console.log('transparent-proxy was started!', server.address());
 
-        for (const singlePath of toTest) {
-            const cmd = 'curl' + ' -x localhost:' + port + ' -k ' + singlePath;
-            console.log(cmd);
-            const {stdout, stderr} = await exec(cmd);
-            console.log('Response =>', stdout,!!stdout.length, stderr);
-        }
-        server.close();
+            for (const singlePath of toTest) {
+                const cmd = 'curl' + ' -x localhost:' + port + ' -k ' + singlePath;
+                console.log(cmd);
+                await exec(cmd);
+            }
+            server.close();
+            res(true);
+        });
     });
 }
 
@@ -435,7 +438,7 @@ async function main() {
     await test6();
     await test7();
     // await test8(); //TODO reactivate this, validation doesn't work with curl 7.83
-    // await test9(); //TODO why return an ECONNREFUSED?
+    await test9();
     server.close();
 }
 
