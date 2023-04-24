@@ -219,13 +219,19 @@ You can find an example [here](https://github.com/gr3p1p3/transparent-proxy/blob
 The Session-Instance is an Object containing info/data about Tunnel.
 It has following useful attributes and methods:
 
-- isHttps - Is session encrypted.
-- request - The Request-Object containing info about current request.
-- response - The Response-Object containing info about current response.
+- {boolean} isHttps - Is session encrypted.
+- {object} request - The Request-Object containing info about current request. Normally defined on both `injectData` & `injectResponse` Callbacks
+   - {object} request.headers - The intercepted request headers
+   - {string|undefined} [request.body] - The intercepted request body
+- {object} response - The Response-Object containing info about current response. Normally defined on `injectResponse` Callback
+   - {object} response.headers - The intercepted response headers
+   - {string} response.body - The intercepted response body. It could be empty.
+   - {boolean} response.complete - is response completely done
+- {buffer} rawResponse - The original body buffer.
 
-- getTunnelStats() - Get Stats for this tunnel
-- getId() - Get Own ID-Session
-- isAuthenticated() - Is the session authenticated by user or not.
+- {object} getTunnelStats() - Get Stats for this tunnel
+- {string} getId() - Get Own ID-Session
+- {boolean} isAuthenticated() - Is the session authenticated by user or not.
 
 
 ## .getBridgedConnections()
