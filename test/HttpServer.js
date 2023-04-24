@@ -4,9 +4,9 @@
  * @returns {Promise<server>}
  */
 module.exports = function startServer(tests) {
+    const zlib = require('zlib');
     const express = require('express');
     const app = express();
-
 
     app.get('/', function (req, res) {
         const responseObject = Object.assign({}, {headers: req.headers}, {ip: req.socket.remoteAddress});
@@ -14,7 +14,6 @@ module.exports = function startServer(tests) {
     });
 
     app.get('/ip', function (req, res) {
-        const responseObject = Object.assign({}, req.headers, {ip: req.socket.remoteAddress});
         res.send(req.socket.remoteAddress).end();
     });
 
@@ -30,12 +29,19 @@ module.exports = function startServer(tests) {
         // Create a Gzip Transform Stream
         const gzip = zlib.createGzip();
 
+        const interval = setInterval(() => {
+            // From Node.js docs: Calling .flush() on a compression stream will
+            // make zlib return as much output as currently possible.
+            gzip.flush();
+        }, 1000);
+
         setTimeout(() => {
-            gzip.write('');
+            gzip.write('{response:"ok"}');
+            clearInterval(interval);
             gzip.end();
         }, 5500);
 
-        // Pipe the Gzip Transform-Stream into the Response stream
+        // Pipe the Gzip Transform Stream into the Response stream
         gzip.pipe(res);
     });
 

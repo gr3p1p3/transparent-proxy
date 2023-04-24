@@ -386,6 +386,45 @@ async function test8() {
     });
 }
 
+async function test9() {
+    console.log('Starting TEST9 - Use Gzip with Transfer');
+    const toTest = ['http://localhost:3000/gzip-chunked'];
+    const MUST_BE = '{response:"ok"}';
+
+    const server = new ProxyServer({
+        verbose: true,
+        intercept: true,
+        injectResponse: (data, session) => {
+            if (session.response.complete) { //if response is finished
+                console.log('Response is completed');
+                const zlib = require('zlib');
+                zlib.gunzip(session.rawResponse, function (err, decoded) {
+                    if (decoded.toString() !== MUST_BE) {
+                        console.error('Decoded is not', MUST_BE, 'but is', decoded.toString());
+                        process.exit(9);
+                    }
+
+                });
+            }
+            return data;
+        }
+    });
+
+    const port = 10009;
+    //starting server on port 10009
+    server.listen(port, '0.0.0.0', async function () {
+        console.log('transparent-proxy was started!', server.address());
+
+        for (const singlePath of toTest) {
+            const cmd = 'curl' + ' -x localhost:' + port + ' -k ' + singlePath;
+            console.log(cmd);
+            const {stdout, stderr} = await exec(cmd);
+            console.log('Response =>', stdout,!!stdout.length, stderr);
+        }
+        server.close();
+    });
+}
+
 async function main() {
     const server = await HttpServer([]);
     await test1();
@@ -396,6 +435,7 @@ async function main() {
     await test6();
     await test7();
     // await test8(); //TODO reactivate this, validation doesn't work with curl 7.83
+    // await test9(); //TODO why return an ECONNREFUSED?
     server.close();
 }
 
