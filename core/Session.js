@@ -2,7 +2,7 @@ const tls = require('tls');
 const {EVENTS, DEFAULT_KEYS, STRINGS, HTTP_METHODS} = require('../lib/constants');
 const parseDataToObject = require('../lib/parseDataToObject');
 const {CLOSE, DATA, ERROR} = EVENTS;
-const {CRLF, TRANSFER_ENCODING, CONTENT_LENGTH, CHUNKED, ZERO} = STRINGS;
+const {BINARY_ENCODING, CRLF, TRANSFER_ENCODING, CONTENT_LENGTH, CHUNKED, ZERO} = STRINGS;
 const NOT_HEX_VALUE = /[^0-9A-Fa-f]/g;
 
 /**
@@ -194,30 +194,30 @@ class Session {
     }
 
     set rawResponse(buffer) {
-        const bufferToPush = Buffer.from(buffer);
+        const bufferToPush = Buffer.from(buffer, BINARY_ENCODING);
         const splitAt = bufferToPush.indexOf(CRLF);
         if (splitAt > -1) {
             //handling transfer-encoding: chunked
             // each chunk contains info like:
             // chunk length in hex\r\n
             // chunk\r\n
-            const infoPairs = bufferToPush.toString().split(CRLF, 50);
+            const infoPairs = bufferToPush.toString(BINARY_ENCODING).split(CRLF, 50);
             for (let i = 0; i < infoPairs.length; i++) {
                 const info = infoPairs[i];
-                if (i % 2) {
+                if (i % 2 && !!info) {
                     //chunk to push here
-                    this._rawResponseBodyChunks.push(Buffer.from(info));
+                    this._rawResponseBodyChunks.push(Buffer.from(info, BINARY_ENCODING));
                 }
                 else {
                     if (!!info) {
                         //info should be an hex-value
                         const chunkLength = parseInt(info, 16);
                         if (!Number.isInteger(chunkLength)) { //if this is not a number, then it is a normal chunk
-                            this._rawResponseBodyChunks.push(Buffer.from(info));
+                            this._rawResponseBodyChunks.push(Buffer.from(info, BINARY_ENCODING));
                         }
                         else if (info.match(NOT_HEX_VALUE)) { //if it isn't an hex value
                             //then it was a CRLF on body that need to be added
-                            this._rawResponseBodyChunks.push(Buffer.from(CRLF + info));
+                            this._rawResponseBodyChunks.push(Buffer.from(CRLF + info, BINARY_ENCODING));
                         }
                     }
                 }
