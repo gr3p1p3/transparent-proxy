@@ -292,7 +292,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
 
                         const parsedCredentials = Buffer.from(credentials, 'base64')
                             .toString(); //converting from base64
-                        const [username, password] = parsedCredentials.split(SEPARATOR, 2); // TODO split only once
+                        const [username, password] = parsedCredentials.split(SEPARATOR, 2); //split only once
                         let isLogged = auth(username, password, thisTunnel);
 
                         if (isLogged instanceof Promise) { //if async operation...
@@ -301,6 +301,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
 
                         if (isLogged) {
                             thisTunnel.setUserAuthentication(username);
+                            // cleaning data from headers because we dont need to leak this info
                             const headers = Object.assign({}, thisTunnel.request.headers);
                             delete headers[PROXY_AUTH.toLowerCase()];
                             const newData = rebuildHeaders(headers, data);
