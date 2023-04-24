@@ -207,8 +207,12 @@ If no object is returned, then [default keys](https://github.com/gr3p1p3/transpa
 
 If passed a function, the proxy will call it to obtain the TLS secure context instead of using `keys`.
 
-From [tls.createServer](https://nodejs.org/api/tls.html#tlscreateserveroptions-secureconnectionlistener)
-    Two arguments will be passed when called: servername and callback. callback is an error-first callback that takes two optional arguments: error and ctx. ctx, if provided, is a SecureContext instance. tls.createSecureContext() can be used to get a proper SecureContext. If callback is called with a falsy ctx argument, the default secure context of the server will be used.
+From [tls.createServer](https://nodejs.org/api/tls.html#tlscreateserveroptions-secureconnectionlistener) two arguments will be passed when called: servername and callback. Callback is an error-first callback that takes two optional arguments: error and ctx. ctx, if provided, is a SecureContext instance. 
+
+tls.createSecureContext() can be used to get a proper SecureContext. If callback is called with a falsy ctx argument, the default secure context of the server will be used.
+
+
+You can find an example [here](https://github.com/gr3p1p3/transparent-proxy/blob/master/examples/sniCallback.js).
 
 ## Session-Instance
 
