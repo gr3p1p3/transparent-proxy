@@ -197,34 +197,25 @@ class Session {
         const bufferToPush = Buffer.from(buffer, BINARY_ENCODING);
         const splitAt = bufferToPush.indexOf(CRLF);
         if (splitAt > -1) {
-            //handling transfer-encoding: chunked
+            // handling transfer-encoding: chunked
             // each chunk contains info like:
             // chunk length in hex\r\n
             // chunk\r\n
-            const infoPairs = bufferToPush.toString(BINARY_ENCODING).split(CRLF, 50);
-            for (let i = 0; i < infoPairs.length; i++) {
-                const info = infoPairs[i];
-                if (i % 2 && !!info) {
-                    //chunk to push here
-                    this._rawResponseBodyChunks.push(Buffer.from(info, BINARY_ENCODING));
-                }
-                else {
-                    if (!!info) {
-                        //info should be an hex-value
-                        const chunkLength = parseInt(info, 16);
-                        if (!Number.isInteger(chunkLength)) { //if this is not a number, then it is a normal chunk
-                            this._rawResponseBodyChunks.push(Buffer.from(info, BINARY_ENCODING));
-                        }
-                        else if (info.match(NOT_HEX_VALUE)) { //if it isn't an hex value
-                            //then it was a CRLF on body that need to be added
-                            this._rawResponseBodyChunks.push(Buffer.from(CRLF + info, BINARY_ENCODING));
-                        }
-                    }
+            const [chunkLengthHex, chunk] = [bufferToPush.slice(0, splitAt), bufferToPush.slice(splitAt + CRLF.length)];
+            const chunkLength = parseInt(chunkLengthHex, 16);
+            if (Number.isInteger(chunkLength)
+                && chunkLength !== 0) {
+                const [thisChunk, nextChunk] = [chunk.slice(0, chunkLength), chunk.slice(chunkLength + CRLF.length)];
+                this._rawResponseBodyChunks.push(thisChunk);
+                if (nextChunk.length > 0) {
+                    return this.rawResponse = nextChunk; //process next chunk in recursion
                 }
             }
-            return;
+            else if(!Number.isInteger(chunkLength)) {
+                return this.rawResponse = chunkLengthHex; //valid chunk is what we think could be the hex-number
+            }
+            return; //go out from this function
         }
-
         this._rawResponseBodyChunks.push(bufferToPush);
     }
 
