@@ -182,6 +182,13 @@ class Session {
             ++this._responseCounter;
             this._response = Object.assign({}, this._response, parsedResponse);
 
+            if(this._response?.statusCode > 300
+                && this._response?.statusCode < 400) {
+                //redirects will use same session to do next requests
+                --this._requestCounter;
+                --this._responseCounter;
+            }
+
             if (this._response?.headers?.[CONTENT_LENGTH] && this._response?.body) {
                 const bodyBytes = Buffer.byteLength(this._response.body);
                 this._response.complete = parseInt(this._response.headers[CONTENT_LENGTH]) <= bodyBytes;
@@ -194,6 +201,9 @@ class Session {
     }
 
     set rawResponse(buffer) {
+        if(this._responseCounter === 0) {
+            this._rawResponseBodyChunks = []; //need to reset all possible body-chunks
+        }
         const bufferToPush = Buffer.from(buffer, BINARY_ENCODING);
         const splitAt = bufferToPush.indexOf(CRLF);
         if (splitAt > -1) {
@@ -296,7 +306,7 @@ class Session {
                 .on(ERROR, onClose);
             // https://github.com/nodejs/node/blob/7f7a899fa5f3b192d4f503f6602f24f7ff4ec57a/lib/_tls_wrap.js#L976
             // https://github.com/nodejs/node/blob/7f7a899fa5f3b192d4f503f6602f24f7ff4ec57a/lib/_tls_wrap.js#L1675-L1686
-            dstSocket.setServername(this._dst._host || this._tunnel.UPSTREAM.host);
+            dstSocket.setServername(this?._tunnel?.UPSTREAM?.host || this._dst._host);
             this.setRequestSocket(dstSocket);
             this._updated = true;
         }
