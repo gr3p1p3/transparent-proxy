@@ -182,11 +182,11 @@ class Session {
             ++this._responseCounter;
             this._response = Object.assign({}, this._response, parsedResponse);
 
-            if(this._response?.statusCode > 300
+            if(this._response?.statusCode >= 300
                 && this._response?.statusCode < 400) {
                 //redirects will use same session to do next requests
-                --this._requestCounter;
-                --this._responseCounter;
+                --this._requestCounter; //resetting request
+                --this._responseCounter; //resetting response
             }
 
             if (this._response?.headers?.[CONTENT_LENGTH] && this._response?.body) {
