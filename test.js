@@ -399,6 +399,9 @@ async function test9() {
                 console.log('Response is completed');
                 const zlib = require('zlib');
                 zlib.gunzip(session.rawResponse, function (err, decoded) {
+                    if(err) {
+                        throw err;
+                    }
                     console.log('Decoded is', decoded.toString());
                     if (decoded.toString() !== MUST_BE) {
                         console.error('Decoded is not', MUST_BE, 'but is', decoded.toString());
