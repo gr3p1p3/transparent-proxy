@@ -182,18 +182,20 @@ class Session {
             ++this._responseCounter;
             this._response = Object.assign({}, this._response, parsedResponse);
 
-            if(this._response?.statusCode >= 300
+            if (this._response?.statusCode >= 300
                 && this._response?.statusCode < 400) {
                 //redirects will use same session to do next requests
                 --this._requestCounter; //resetting request
                 --this._responseCounter; //resetting response
             }
 
-            if (this._response?.headers?.[CONTENT_LENGTH] && this._response?.body) {
-                const bodyBytes = Buffer.byteLength(this._response.body);
+            if (this._response?.headers?.[CONTENT_LENGTH]
+                && this.rawResponse.length) {
+                const bodyBytes = Buffer.byteLength(this.rawResponse);
                 this._response.complete = parseInt(this._response.headers[CONTENT_LENGTH]) <= bodyBytes;
             }
-            if (this._response?.headers?.[TRANSFER_ENCODING] === CHUNKED && this._response?.body) {
+            if (this._response?.headers?.[TRANSFER_ENCODING] === CHUNKED
+                && this.rawResponse.length) {
                 this._response.complete = buffer.indexOf(ZERO + CRLF + CRLF) > -1;
             }
         }
@@ -201,7 +203,7 @@ class Session {
     }
 
     set rawResponse(buffer) {
-        if(this._responseCounter === 0) {
+        if (this._responseCounter === 0) {
             this._rawResponseBodyChunks = []; //need to reset all possible body-chunks
         }
         const bufferToPush = Buffer.from(buffer, BINARY_ENCODING);
@@ -221,7 +223,7 @@ class Session {
                     return this.rawResponse = nextChunk; //process next chunk in recursion
                 }
             }
-            else if(!Number.isInteger(chunkLength)) {
+            else if (!Number.isInteger(chunkLength)) {
                 return this.rawResponse = chunkLengthHex; //valid chunk is what we think could be the hex-number
             }
             return; //go out from this function
