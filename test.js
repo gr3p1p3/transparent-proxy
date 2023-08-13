@@ -431,40 +431,6 @@ async function test9() {
     });
 }
 
-async function test10() {
-    console.log('Starting TEST10 - Get bridged connections');
-    const toTest = ['http://localhost:3000'];
-
-    const server = new ProxyServer({
-        verbose: true
-    });
-
-    // console.log('server', server.getBridgedConnections)
-
-    const port = 10010;
-    return new Promise(function (res, rej) {
-        //starting server on port 10009
-        server.listen(port, '0.0.0.0', async function () {
-            console.log('transparent-proxy was started!', server.address());
-
-            setInterval(function () {
-                console.log('Bridged connections');
-                const bridgedConnections = server.getBridgedConnections();
-                console.log([new Date()], 'OPEN =>', Object.keys(bridgedConnections).length)
-            }, 2000);
-
-            for (const singlePath of toTest) {
-                const cmd = 'curl' + ' -x localhost:' + port + ' -k ' + singlePath;
-                console.log(cmd);
-                await exec(cmd);
-                console.log('responsed')
-            }
-            server.close();
-            res(true);
-        });
-    });
-}
-
 async function main() {
     const server = await HttpServer([]);
     await test1();
@@ -476,7 +442,6 @@ async function main() {
     await test7();
     // await test8(); //TODO reactivate this, validation doesn't work with curl 7.83
     await test9();
-    // await test10();
     server.close();
 }
 

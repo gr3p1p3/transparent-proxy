@@ -31,8 +31,14 @@ class ProxyServer extends net.createServer {
                 logger || new Logger(verbose) )
         });
         this.bridgedConnections = bridgedConnections;
+
+        //TODO this is an horrible workaround, but extending doesn't work
+        this.getBridgedConnections = function _getBridgedConnections() {
+            return this.bridgedConnections;
+        }
     }
 
+    //TODO why doesnt work?
     getBridgedConnections() {
         return this.bridgedConnections;
     };
