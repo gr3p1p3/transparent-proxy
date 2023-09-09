@@ -52,6 +52,7 @@ server.listen(8080, '0.0.0.0', function () {
 |[options.intercept] | <code>Boolean</code> |  Activate interception of encrypted communications. False as default. |
 |[options.logger] | <code>Logger</code> |  Must be an object implementing `log(args[])` and `error(args[])`. Defaults to the [inbuilt logger](./lib/Logger.js) writing to the console if `verbose` is true.|
 |[options.handleSni] | <code>Function</code> | Pass SNICallback to be added to the server. See [SNICallback tls.createServer options](https://nodejs.org/api/tls.html#tlscreateserveroptions-secureconnectionlistener) |
+|[options.interceptOptions] | <code>Object</code> | The used options while intercepting HTTPs. As Default `{server:{rejectUnauthorized:false,requestCert:false},client:{rejectUnauthorized: false,requestCert: false}}`|
 
 
 

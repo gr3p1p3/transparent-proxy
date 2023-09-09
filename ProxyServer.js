@@ -13,8 +13,9 @@ class ProxyServer extends net.createServer {
             verbose,
             injectData, injectResponse,
             auth, intercept, keys,
-            handleSni, logger
-        } = {...DEFAULT_OPTIONS, ...options}; //merging with default options
+            handleSni, logger,
+            interceptOptions
+        } = Object.assign({}, DEFAULT_OPTIONS, options); //merging with default options
         const bridgedConnections = {};
 
         super(function (clientSocket) {
@@ -25,10 +26,9 @@ class ProxyServer extends net.createServer {
                     upstream, tcpOutgoingAddress,
                     injectData, injectResponse,
                     auth, intercept, keys,
-                    handleSni,
-
+                    handleSni, interceptOptions
                 },
-                logger || new Logger(verbose) )
+                logger || new Logger(verbose))
         });
         this.bridgedConnections = bridgedConnections;
 

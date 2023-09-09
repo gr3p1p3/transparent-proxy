@@ -31,10 +31,11 @@ function socketDestroy(socket) {
 
 class Session {
     /**
-     *
-     * @param {string} id - The used ID.
+     * Initialize Session-Instance.
+     * @param {String} id - The used ID.
+     * @param {Object} interceptOptions - The used option to use when intercepting HTTPs.
      */
-    constructor(id) {
+    constructor(id, interceptOptions) {
         this._id = id;
         this._src = null;
         this._dst = null;
@@ -49,42 +50,50 @@ class Session {
         this._responseCounter = 0;
         this._isRequestPaused = false;
         this._isResponsePaused = false;
-        this._interceptOptions = {
-            server: {
-                rejectUnauthorized: false,
-                requestCert: false,
-            },
-            client: {
-                rejectUnauthorized: false,
-                requestCert: false,
-            }
-        };
 
         this._rawResponseBodyChunks = [];
+        this._interceptOptions = interceptOptions;
     }
 
+    /**
+     * Pause stream for request
+     * @private
+     */
     _pauseRequest() {
         this._dst.pause();
         this._isRequestPaused = true;
     }
 
+    /**
+     * Reactivate stream for requests
+     * @private
+     */
     _resumeRequest() {
         this._dst.resume();
         this._isRequestPaused = false;
     }
 
+    /**
+     * Pause stream for response
+     * @private
+     */
     _pauseResponse() {
         this._src.pause();
         this._isResponsePaused = true;
     }
 
+    /**
+     * Reactivate stream for response
+     * @private
+     */
     _resumeResponse() {
         this._src.resume();
         this._isResponsePaused = false;
     }
 
     /**
-     * @param {buffer|string} data - The data to send.
+     * Write given data to destination Socket.
+     * @param {buffer|string} data - The data to send. (The outgoing payload)
      * @returns {Session}
      */
     async clientRequestWrite(data) {
@@ -92,7 +101,8 @@ class Session {
     }
 
     /**
-     * @param {buffer|string} data - The data to send.
+     * Write given data to source Socket.
+     * @param {buffer|string} data - The data to send. (The incoming payload)
      * @returns {Session}
      */
     async clientResponseWrite(data) {
@@ -241,10 +251,18 @@ class Session {
         this._rawResponseBodyChunks.push(bufferToPush);
     }
 
+    /**
+     * Get the response body as Buffer.
+     * @returns {Buffer}
+     */
     get rawResponse() {
         return Buffer.concat(this._rawResponseBodyChunks);
     }
 
+    /**
+     * Get response object.
+     * @returns {Object}
+     */
     get response() {
         return Object.assign({}, this._response, {body: this.rawResponse.toString()});
     }

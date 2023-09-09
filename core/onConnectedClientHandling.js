@@ -37,7 +37,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         upstream, tcpOutgoingAddress,
         injectData, injectResponse,
         auth, intercept, keys,
-        handleSni
+        handleSni, interceptOptions
     } = options;
 
 
@@ -328,7 +328,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         }
     }
 
-    bridgedConnections[remoteID] = new Session(remoteID); //initializing bridged-connection
+    bridgedConnections[remoteID] = new Session(remoteID, interceptOptions); //initializing bridged-connection
     bridgedConnections[remoteID].setResponseSocket(
         clientSocket
             .on(DATA, onDataFromClient)
