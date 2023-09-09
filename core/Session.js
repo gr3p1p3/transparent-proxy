@@ -49,6 +49,16 @@ class Session {
         this._responseCounter = 0;
         this._isRequestPaused = false;
         this._isResponsePaused = false;
+        this._interceptOptions = {
+            server: {
+                rejectUnauthorized: false,
+                requestCert: false,
+            },
+            client: {
+                rejectUnauthorized: false,
+                requestCert: false,
+            }
+        };
 
         this._rawResponseBodyChunks = [];
     }
@@ -282,27 +292,23 @@ class Session {
             callbacksObject;
 
         if (!this._updated) {
-            const srcSocket = new tls.TLSSocket(this._src, {
-                rejectUnauthorized: false,
-                requestCert: false,
+            const serverOptions = Object.assign({}, this._interceptOptions.server, {
                 isServer: true,
                 ...(!handleSni && {
                     key: KEYS.key,
                     cert: KEYS.cert,
                 }),
                 SNICallback: handleSni,
-            })
+            });
+            const srcSocket = new tls.TLSSocket(this._src, serverOptions)
                 .on(DATA, onDataFromClient)
                 .on(CLOSE, onClose)
                 .on(ERROR, onClose);
 
             this.setResponseSocket(srcSocket);
 
-            const dstSocket = new tls.TLSSocket(this._dst, {
-                rejectUnauthorized: false,
-                requestCert: false,
-                isServer: false
-            })
+            const clientOptions = Object.assign({}, this._interceptOptions.client, {isServer: false});
+            const dstSocket = new tls.TLSSocket(this._dst, clientOptions)
                 .on(DATA, onDataFromUpstream)
                 .on(CLOSE, onClose)
                 .on(ERROR, onClose);
