@@ -25,6 +25,7 @@ function sleep(ms) {
     });
 }
 
+
 /**
  *
  * @param clientSocket
@@ -39,7 +40,6 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         auth, intercept, keys,
         handleSni, interceptOptions
     } = options;
-
 
     const remotePort = clientSocket.remotePort;
     const remoteAddress = clientSocket.remoteAddress;
@@ -97,8 +97,8 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
         const thisTunnel = bridgedConnections[remoteID];
         if (thisTunnel) {
             if (!thisTunnel._isResponsePaused) {
-                thisTunnel.response = dataFromUpStream;
                 thisTunnel._pauseResponse();
+                await thisTunnel.sendToMirror(dataFromUpStream, true);
                 const responseData = isFunction(injectResponse)
                     ? await injectResponse(dataFromUpStream, thisTunnel)
                     : dataFromUpStream;
@@ -139,7 +139,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
 
     function updateSockets() {
         const thisTunnel = bridgedConnections[remoteID];
-        if (intercept && thisTunnel && thisTunnel.isHttps && !thisTunnel._updated) {
+        if (intercept && thisTunnel?.isHttps && !thisTunnel._updated) {
             const keysObject = isFunction(keys)
                 ? keys(thisTunnel)
                 : false;
@@ -154,13 +154,13 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
 
     /**
      * @param {buffer} data
-     * @param {string} firstHeaderRow
      * @param {boolean} isConnectMethod - false as default.
      * @returns Promise{boolean|{host: string, port: number, protocol: string, credentials: string, upstreamed: boolean}}
      */
-    async function prepareTunnel(data, firstHeaderRow, isConnectMethod = false) {
+    async function prepareTunnel(data, isConnectMethod = false) {
         const thisTunnel = bridgedConnections[remoteID];
-        const upstreamHost = firstHeaderRow.split(BLANK)[1];
+
+        const upstreamHost = thisTunnel._request.headers.host;
         const initOpt = getConnectionOptions(false, upstreamHost);
 
         thisTunnel.setTunnelOpt(initOpt); //settings opt before callback
@@ -192,7 +192,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
             }
 
             if (connectionOpt.credentials) {
-                const headers = thisTunnel.request.headers;
+                const headers = thisTunnel._request.headers;
                 const basedCredentials = Buffer.from(connectionOpt.credentials)
                     .toString('base64'); //converting to base64
                 headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
@@ -215,7 +215,8 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
             if (connectionOpt.upstreamed) {
                 if (connectionOpt.credentials) {
                     const headers = thisTunnel.request.headers;
-                    const basedCredentials = Buffer.from(connectionOpt.credentials).toString('base64'); //converting to base64
+                    const basedCredentials = Buffer.from(connectionOpt.credentials)
+                        .toString('base64'); //converting to base64
                     headers[PROXY_AUTH.toLowerCase()] = PROXY_AUTH_BASIC + BLANK + basedCredentials;
                     const newData = rebuildHeaders(headers, data);
                     await thisTunnel.clientRequestWrite(newData)
@@ -249,21 +250,19 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
     }
 
     /**
-     * @param {Array<string>} split
      * @param {buffer} data
      */
-    function handleProxyTunnel(split, data) {
-        const firstHeaderRow = split[0];
+    function handleProxyTunnel(data) {
         const thisTunnel = bridgedConnections[remoteID];
 
-        if (~firstHeaderRow.indexOf(CONNECT)) { //managing HTTP-Tunnel(upstream) & HTTPs
-            return prepareTunnel(data, firstHeaderRow, true);
+        if (thisTunnel._request.method === CONNECT) { //managing HTTP-Tunnel(upstream) & HTTPs
+            return prepareTunnel(data, true);
         }
-        else if (firstHeaderRow.indexOf(CONNECT) === -1
+        else if (thisTunnel._request.method !== CONNECT
             && !thisTunnel._dst) { // managing http
-            return prepareTunnel(data, firstHeaderRow);
+            return prepareTunnel(data);
         }
-        else if (thisTunnel && thisTunnel._dst) {
+        else if (thisTunnel?._dst) {
             return onDirectConnectionOpen(data);
         }
     }
@@ -274,14 +273,11 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
      */
     async function onDataFromClient(data) {
         const thisTunnel = bridgedConnections[remoteID];
-        thisTunnel.request = data;
-
-        const dataString = data.toString();
+        await thisTunnel.sendToMirror(data);
 
         try {
-            if (dataString && dataString.length > 0) {
-                const headers = thisTunnel.request.headers;
-                const split = dataString.split(CRLF);
+            if (data?.length > 0) {
+                const headers = thisTunnel._request.headers;
 
                 if (isFunction(auth)
                     && !thisTunnel.isAuthenticated()) {
@@ -302,10 +298,10 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
                         if (isLogged) {
                             thisTunnel.setUserAuthentication(username);
                             // cleaning data from headers because we dont need to leak this info
-                            const headers = Object.assign({}, thisTunnel.request.headers);
+                            const headers = Object.assign({}, thisTunnel._request.headers);
                             delete headers[PROXY_AUTH.toLowerCase()];
                             const newData = rebuildHeaders(headers, data);
-                            return handleProxyTunnel(split, newData);
+                            return handleProxyTunnel(newData);
                         }
                         else {
                             //return auth-error and close all
@@ -319,7 +315,7 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
                     }
                 }
                 else {
-                    return handleProxyTunnel(split, data);
+                    return handleProxyTunnel(data);
                 }
             }
         }

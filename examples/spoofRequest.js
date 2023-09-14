@@ -9,13 +9,12 @@ const server = new ProxyServer({
     intercept: true,
     verbose: true,
     injectData: (data, session) => {
-        if (session.isHttps) {
-            const modifiedData = data.toString()
-                .replace(session.request.headers['user-agent'], switchWith); //replacing UA-Header-Value
+        console.log('req before spoofing', session.request);
 
-            return Buffer.from(modifiedData);
-        }
-        return data;
+        const modifiedData = data.toString()
+            .replace(session.request.headers['user-agent'], switchWith); //replacing UA-Header-Value
+
+        return Buffer.from(modifiedData);
     }
 });
 
@@ -31,7 +30,7 @@ server.listen(port, '0.0.0.0', async function () {
             .catch((err) => ({stdout: err.message}));
         console.log('Response =>', stdout);
     }
-    server.close();
+    await server.close();
 });
 
 // curl -x localhost:10001 http://ifconfig.io/ua

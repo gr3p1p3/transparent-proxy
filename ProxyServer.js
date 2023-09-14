@@ -28,8 +28,9 @@ class ProxyServer extends net.createServer {
                     auth, intercept, keys,
                     handleSni, interceptOptions
                 },
-                logger || new Logger(verbose))
+                logger || new Logger(verbose));
         });
+
         this.bridgedConnections = bridgedConnections;
 
         //TODO this is an horrible workaround, but extending doesn't work
