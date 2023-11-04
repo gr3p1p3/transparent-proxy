@@ -7,7 +7,7 @@ const {CRLF, TRANSFER_ENCODING, CONTENT_LENGTH, CHUNKED, ZERO} = STRINGS;
 module.exports = class HttpMirror {
     constructor(session) {
         this.server = http.createServer();
-        // this.client = http.request;
+        this.server.encoding
         this.isListening = false;
         this._session = session;
         this._mirror = {
@@ -25,7 +25,6 @@ module.exports = class HttpMirror {
             resolve(false);
             return false;
         });
-
     }
 
     listen() {
@@ -112,6 +111,10 @@ module.exports = class HttpMirror {
 
                 http.request(options, (response) => {
                     const {headers, httpVersion, statusCode} = response;
+                    let chunked = false;
+                    if (headers?.[TRANSFER_ENCODING] === CHUNKED) {
+                        chunked = true;
+                    }
                     this._mirror.server.request = response;
 
                     response
@@ -124,7 +127,9 @@ module.exports = class HttpMirror {
                             }
                         })
                         .once('data', (chunk) => {
-                            resolve({headers, httpVersion, statusCode});
+                            if (chunked) {
+                                resolve({headers, httpVersion, statusCode});
+                            }
                         })
                         .once('close', async () => {
                             session._response.complete = true;
@@ -134,9 +139,9 @@ module.exports = class HttpMirror {
                             resolve({headers, httpVersion, statusCode});
                         });
 
-                    setTimeout(() => {
-                        resolve({headers, httpVersion, statusCode}); //resolving in case of no data after 10ms
-                    }, 10);
+                    // setTimeout(() => {
+                    //     resolve({headers, httpVersion, statusCode}); //resolving in case of no data after 10ms
+                    // }, 10);
                 })
                     .end();
             }

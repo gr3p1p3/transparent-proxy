@@ -42,7 +42,8 @@ class Session {
         this._rawRequestBodyChunks = [];
         this._interceptOptions = interceptOptions;
 
-        this._httpMirror = new HttpMirror(this);
+        this._httpRequestMirror = new HttpMirror(this);
+        this._httpResponseMirror = new HttpMirror(this);
     }
 
     /**
@@ -104,9 +105,9 @@ class Session {
      * @returns {Session}
      */
     destroy() {
-        if (this._httpMirror.isListening) {
-            this._httpMirror.close();
-        }
+        this._httpResponseMirror.close();
+        this._httpRequestMirror.close();
+
         if (this._dst) {
             socketDestroy(this._dst);
         }
@@ -145,15 +146,21 @@ class Session {
     }
 
     async sendToMirror(data, isResponse = false) {
-        await this._httpMirror.listen(); //this will happen only once
+        if (isResponse) {
+            await this._httpResponseMirror.listen(); //this will happen only once
+        }
+        else {
+            await this._httpRequestMirror.listen(); //this will happen only once
+        }
+
 
         if (!this.isHttps || this._updated) {
             if (!isResponse) {
-                const request = await this._httpMirror.waitForRequest(data); //waiting for parsed request data
+                const request = await this._httpRequestMirror.waitForRequest(data); //waiting for parsed request data
                 this._request = Object.assign(this._request, request);
             }
             else {
-                const response = await this._httpMirror.waitForResponse(data); //waiting for parsed response data
+                const response = await this._httpResponseMirror.waitForResponse(data); //waiting for parsed response data
                 this._response = Object.assign(this._response, response);
             }
             return true;
