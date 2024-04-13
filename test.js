@@ -15,7 +15,7 @@ async function test1() {
 
     //starting server on port 10001
     const PORT = 10001;
-    return new Promise(function (res, rej) {
+    return new Promise((res, rej) => {
         server.listen(PORT, '0.0.0.0', async function () {
             console.log('transparent-proxy was started!', server.address());
 
@@ -69,7 +69,7 @@ async function test2() {
         }
     });
 
-    return new Promise(function (res, rej) {
+    return new Promise((res, rej) => {
         server.listen(PORT, '0.0.0.0', async function () {
             console.log('transparent-proxy was started!', server.address());
 
@@ -114,7 +114,7 @@ async function test3() {
         }
     });
 
-    return new Promise(function (res, rej) {
+    return new Promise((res, rej) => {
         server.listen(PORT, '0.0.0.0', async function () {
             console.log('transparent-proxy was started!', server.address());
 
@@ -154,7 +154,7 @@ async function test4() {
         }
     });
 
-    return new Promise(function (res, rej) {
+    return new Promise((res, rej) => {
         server.listen(PORT, '0.0.0.0', async function () {
             console.log('transparent-proxy was started!', server.address());
 
@@ -189,7 +189,7 @@ async function test5() {
         }
     });
 
-    return new Promise(function (res, rej) {
+    return new Promise((res, rej) => {
         server.listen(PORT, '0.0.0.0', async function () {
             console.log('transparent-proxy was started!', server.address());
 
@@ -248,7 +248,7 @@ async function test6() {
         }
     });
 
-    return new Promise(function (res, rej) {
+    return new Promise((res, rej) => {
         server.listen(PORT, '0.0.0.0', async function () {
             console.log('transparent-proxy was started!', server.address());
 
@@ -295,7 +295,7 @@ async function test7() {
         logger: loggerStub,
     });
 
-    return new Promise(function (res, rej) {
+    return new Promise((res, rej) => {
         server.listen(PORT, '0.0.0.0', async function () {
             console.log('transparent-proxy was started!', server.address());
 
@@ -363,7 +363,7 @@ async function test8() {
         }
     });
 
-    return new Promise(function (res, rej) {
+    return new Promise((res, rej) => {
         server.listen(PORT, '0.0.0.0', async function () {
             console.log('transparent-proxy was started!', server.address());
 
@@ -415,7 +415,7 @@ async function test9() {
     });
 
     const port = 10009;
-    return new Promise(function (res, rej) {
+    return new Promise((res, rej) => {
         //starting server on port 10009
         server.listen(port, '0.0.0.0', async function () {
             console.log('transparent-proxy was started!', server.address());
@@ -431,6 +431,66 @@ async function test9() {
     });
 }
 
+
+// async function test10() {
+//     const puppeteer = require('puppeteer');
+//
+//     const server = new ProxyServer({
+//         verbose: true,
+//         intercept: true,
+//         injectResponse: (data, session) => {
+//             // console.log('data', session.response.headers)
+//             if (session.response.complete) { //if response is finished
+//                 console.log('Response is completed');
+//                 const zlib = require('zlib');
+//                 zlib.gunzip(session.rawResponse, function (err, decoded) {
+//                     if (err) {
+//                         throw err;
+//                     }
+//                     console.log('Decoded is', decoded.toString());
+//                     // if (decoded.toString() !== MUST_BE) {
+//                     //     console.error('Decoded is not', MUST_BE, 'but is', decoded.toString());
+//                     //     process.exit(9);
+//                     // }
+//                 });
+//             }
+//             return data;
+//         }
+//     });
+//
+//     const port = 10010;
+//     return new Promise((res, rej) => {
+//         //starting server
+//         server.listen(port, '0.0.0.0', async function () {
+//             console.log('transparent-proxy was started!', server.address());
+//
+//             const browser = await puppeteer.launch({
+//                 headless: false,
+//                 ignoreHTTPSErrors: true,
+//                 args: [
+//                     `--proxy-server=localhost:` + port,
+//                     '--ignore-certificate-errors',
+//                     '--ignore-certificate-errors-spki-list',
+//                     '--disable-gpu',
+//                     '--disable-dev-shm-usage',
+//                     '--disable-setuid-sandbox',
+//                     '--no-first-run',
+//                     '--no-sandbox',
+//                     '--no-zygote',
+//                 ]
+//             });
+//             const page = await browser.newPage();
+//
+//             await page.goto('https://localhost:3001/gzip-chunked', {waitUntil: 'networkidle2'});
+//             console.log('page', await page.title());
+//             await page.close();
+//             await browser.close();
+//             server.close();
+//             res(true);
+//         });
+//     });
+// }
+
 async function main() {
     const server = await HttpServer([]);
     await test1();
@@ -442,6 +502,7 @@ async function main() {
     await test7();
     // await test8(); //TODO reactivate this, validation doesn't work with curl 7.83
     await test9();
+    // await test10();
     server.close();
 }
 

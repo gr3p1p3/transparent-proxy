@@ -1,10 +1,29 @@
-const net = require('net');
 const tls = require('tls');
-const {EVENTS, DEFAULT_KEYS} = require('../lib/constants');
+const {EVENTS, DEFAULT_KEYS, STRINGS, HTTP_METHODS} = require('../lib/constants');
+const parseDataToObject = require('../lib/parseDataToObject');
 const {CLOSE, DATA, ERROR} = EVENTS;
+const {BINARY_ENCODING, CRLF, TRANSFER_ENCODING, CONTENT_LENGTH, CHUNKED, ZERO} = STRINGS;
+const NOT_HEX_VALUE = /[^0-9A-Fa-f]/g;
 
-const socketWrite = require('../lib/socketWrite');
-const HttpMirror = require('./HttpMirror');
+/**
+ * Write data of given socket
+ * @param {net.Socket} socket
+ * @param data
+ */
+function socketWrite(socket, data) {
+    return new Promise(function (resolve, reject) {
+        try {
+            if (socket && !socket.destroyed && data) {
+                return socket.write(data, null, resolve);
+            }
+        }
+        catch (err) {
+
+        }
+
+        return resolve(false);
+    });
+}
 
 /**
  * Destroy the socket
@@ -39,11 +58,7 @@ class Session {
         this._isResponsePaused = false;
 
         this._rawResponseBodyChunks = [];
-        this._rawRequestBodyChunks = [];
         this._interceptOptions = interceptOptions;
-
-        this._httpRequestMirror = new HttpMirror(this);
-        this._httpResponseMirror = new HttpMirror(this);
     }
 
     /**
@@ -105,9 +120,6 @@ class Session {
      * @returns {Session}
      */
     destroy() {
-        this._httpResponseMirror.close();
-        this._httpRequestMirror.close();
-
         if (this._dst) {
             socketDestroy(this._dst);
         }
@@ -145,29 +157,6 @@ class Session {
         return this;
     }
 
-    async sendToMirror(data, isResponse = false) {
-        if (isResponse) {
-            await this._httpResponseMirror.listen(); //this will happen only once
-        }
-        else {
-            await this._httpRequestMirror.listen(); //this will happen only once
-        }
-
-
-        if (!this.isHttps || this._updated) {
-            if (!isResponse) {
-                const request = await this._httpRequestMirror.waitForRequest(data); //waiting for parsed request data
-                this._request = Object.assign(this._request, request);
-            }
-            else {
-                const response = await this._httpResponseMirror.waitForResponse(data); //waiting for parsed response data
-                this._response = Object.assign(this._response, response);
-            }
-            return true;
-        }
-        return false;
-    }
-
     /**
      * Get own id
      * @returns {string}
@@ -176,19 +165,96 @@ class Session {
         return this._id;
     }
 
-    get response() {
-        return JSON.parse(JSON.stringify(Object.assign({}, this._response, {
-            body: this.rawResponse?.toString() || undefined,
-        })));
+    set request(buffer) {
+        if (!this.isHttps || this._updated) {  //parse only if data is not encrypted
+            const parsedRequest = parseDataToObject(buffer, null, this._requestCounter > 0);
+            const body = parsedRequest.body;
+            delete parsedRequest.body;
+
+            ++this._requestCounter;
+            if (parsedRequest.headers) {
+                this._request = parsedRequest;
+            }
+            if (this._request.method === HTTP_METHODS.CONNECT) { //ignore CONNECT method
+                --this._requestCounter;
+            }
+
+            if (body) {
+                this._request.body = (this._request.body || '') + body;
+            }
+        }
+
+        return this._request;
     }
 
     get request() {
-        return JSON.parse(JSON.stringify(Object.assign({}, this._request, {
-            body: this.rawRequest?.toString() || undefined,
-            trailers: Object.keys(this._request.trailers || {}).length > 0
-                ? this._request.trailers
-                : undefined
-        })));
+        return this._request;
+    }
+
+    set response(buffer) {
+        if (!this.isHttps || this._updated) { //parse only if data is not encrypted
+            const parsedResponse = parseDataToObject(buffer, true, this._responseCounter > 0);
+
+            if (!parsedResponse.headers) {
+                this.rawResponse = buffer; //pushing whole buffer, because there aren't headers here
+            }
+            else {
+                //found body from buffer without converting
+                const DOUBLE_CRLF = CRLF + CRLF;
+                const splitAt = buffer.indexOf(DOUBLE_CRLF, 0);
+                this.rawResponse = buffer.slice(splitAt + DOUBLE_CRLF.length);
+            }
+
+            ++this._responseCounter;
+            this._response = Object.assign({}, this._response, parsedResponse);
+
+            if (this._response?.statusCode >= 300
+                && this._response?.statusCode < 400) {
+                //redirects will use same session to do next requests
+                --this._requestCounter; //resetting request
+                --this._responseCounter; //resetting response
+            }
+
+            if (this._response?.headers?.[CONTENT_LENGTH]
+                && this.rawResponse.length) {
+                const bodyBytes = Buffer.byteLength(this.rawResponse);
+                this._response.complete = parseInt(this._response.headers[CONTENT_LENGTH]) <= bodyBytes;
+            }
+            if (this._response?.headers?.[TRANSFER_ENCODING] === CHUNKED
+                && this.rawResponse.length) {
+                this._response.complete = buffer.indexOf(ZERO + CRLF + CRLF) > -1;
+            }
+        }
+        return this._response;
+    }
+
+    set rawResponse(buffer) {
+        if (this._responseCounter === 0) {
+            this._rawResponseBodyChunks = []; //need to reset all possible body-chunks
+        }
+        const bufferToPush = Buffer.from(buffer, BINARY_ENCODING);
+        const splitAt = bufferToPush.indexOf(CRLF);
+        if (splitAt > -1) {
+            // handling transfer-encoding: chunked
+            // each chunk contains info like:
+            // chunk length in hex\r\n
+            // chunk\r\n
+            const [chunkLengthHex, chunk] = [bufferToPush.slice(0, splitAt), bufferToPush.slice(splitAt + CRLF.length)];
+            const chunkLength = parseInt(chunkLengthHex, 16);
+            if (Number.isInteger(chunkLength)
+                && chunkLength !== 0) {
+                const [thisChunk, nextChunk] = [chunk.slice(0, chunkLength), chunk.slice(chunkLength + CRLF.length)];
+                this._rawResponseBodyChunks.push(thisChunk);
+                if (nextChunk.length > 0) {
+                    return this.rawResponse = nextChunk; //process next chunk in recursion
+                }
+            }
+            else if (!Number.isInteger(chunkLength)) {
+                return this.rawResponse = chunkLengthHex; //valid chunk is what we think could be the hex-number
+            }
+            return; //go out from this function
+        }
+        this._rawResponseBodyChunks.push(bufferToPush);
     }
 
     /**
@@ -200,11 +266,11 @@ class Session {
     }
 
     /**
-     * Get the response body as Buffer.
-     * @returns {Buffer}
+     * Get response object.
+     * @returns {Object}
      */
-    get rawRequest() {
-        return Buffer.concat(this._rawRequestBodyChunks);
+    get response() {
+        return Object.assign({}, this._response, {body: this.rawResponse.toString()});
     }
 
     /**
