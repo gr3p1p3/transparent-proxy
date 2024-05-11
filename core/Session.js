@@ -31,7 +31,7 @@ function socketWrite(socket, data) {
  */
 function socketDestroy(socket) {
     if (socket && !socket.destroyed) {
-        socket.destroy();
+        socket.destroySoon();
     }
 }
 
@@ -167,6 +167,12 @@ class Session {
 
     set request(buffer) {
         if (!this.isHttps || this._updated) {  //parse only if data is not encrypted
+            if (buffer?.toString()?.toLowerCase().indexOf('host:') > -1) {
+                this.authenticated = false;
+                this.user = null;
+                --this._requestCounter;
+            }
+
             const parsedRequest = parseDataToObject(buffer, null, this._requestCounter > 0);
             const body = parsedRequest.body;
             delete parsedRequest.body;

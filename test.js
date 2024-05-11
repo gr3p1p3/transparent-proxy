@@ -2,6 +2,7 @@ const util = require('util');
 const tls = require('tls');
 const exec = util.promisify(require('child_process').exec);
 const ProxyServer = require('./ProxyServer');
+const axios = require('axios');
 const forge = require('node-forge');
 const HttpServer = require('./test/HttpServer');
 
@@ -20,10 +21,18 @@ async function test1() {
             console.log('transparent-proxy was started!', server.address());
 
             for (const singlePath of toTest) {
-                const cmd = 'curl' + ' -x 127.0.0.1:' + PORT + ' ' + singlePath;
-                console.log(cmd);
-                const {stdout, stderr} = await exec(cmd);
-                console.log('Response =>', stdout);
+                const res = await axios.get(singlePath,
+                    {
+                        proxy: {
+                            protocol: 'http',
+                            host: '127.0.0.1',
+                            port: PORT
+                        }
+                    })
+                    .catch((err) => {
+                        return err.response;
+                    });
+                console.log('For:', singlePath, 'Response =>', JSON.stringify(res.data));
             }
 
             console.log('Closing transparent-proxy Server - TEST1\n');
@@ -37,7 +46,6 @@ async function test2() {
     console.log('Starting TEST2 - Spoof Response!');
     let ownIp = '';
     const TO_SWITCH = '6.6.6.6';
-    const IP_REGEXP = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
 
     const toTest = ['http://localhost:3000/ip', 'https://localhost:3001/ip'];
 
@@ -46,7 +54,7 @@ async function test2() {
     const cmdOwnIp = 'curl ' + toTest[0];
     console.log('Getting Own ip with', cmdOwnIp);
     const {stdout, stderr} = await exec(cmdOwnIp);
-    ownIp = stdout;//.match(IP_REGEXP)[0].trim();
+    ownIp = stdout;
     console.log('Your IP is:', ownIp);
 
     console.log('Starting Proxy Server with spoof-behaviors');
@@ -74,11 +82,20 @@ async function test2() {
             console.log('transparent-proxy was started!', server.address());
 
             for (const singlePath of toTest) {
-                const cmd = 'curl' + ' -x 127.0.0.1:' + PORT + ' -k ' + singlePath;
-                console.log(cmd);
-                const {stdout, stderr} = await exec(cmd);
-                console.log('Response =>', stdout);
-                if (stdout !== TO_SWITCH) {
+                const res = await axios.get(singlePath,
+                    {
+                        proxy: {
+                            protocol: 'http',
+                            host: '127.0.0.1',
+                            port: PORT
+                        }
+                    })
+                    .catch((err) => {
+                        return err.response;
+                    });
+                console.log('For:', singlePath, 'Response =>', res.data);
+
+                if (res.data !== TO_SWITCH) {
                     console.error('Response must be', TO_SWITCH);
                     process.exit(2);
                 }
@@ -96,7 +113,7 @@ async function test3() {
 
     const toTest = ['http://localhost:3000/ua', 'https://localhost:3001/ua'];
 
-    const USER_AGENT = /curl\/.+/;
+    const USER_AGENT = /axios\/.+/;
     const TO_SWITCH = 'Spoofed UA!!';
     const PORT = 10003; //starting server on port 10001
 
@@ -119,11 +136,19 @@ async function test3() {
             console.log('transparent-proxy was started!', server.address());
 
             for (const singlePath of toTest) {
-                const cmd = 'curl' + ' -x 127.0.0.1:' + PORT + ' -k ' + singlePath;
-                console.log(cmd);
-                const {stdout, stderr} = await exec(cmd);
-                console.log('Response =>', stdout);
-                if (stdout.trim() !== TO_SWITCH) {
+                const res = await axios.get(singlePath,
+                    {
+                        proxy: {
+                            protocol: 'http',
+                            host: '127.0.0.1',
+                            port: PORT
+                        }
+                    })
+                    .catch((err) => {
+                        return err.response;
+                    });
+                console.log('For:', singlePath, 'Response =>', res.data);
+                if (res.data.trim() !== TO_SWITCH) {
                     console.error('Response must be', TO_SWITCH);
                     process.exit(3);
                 }
@@ -194,23 +219,32 @@ async function test5() {
             console.log('transparent-proxy was started!', server.address());
 
             for (const pwd of pwdToTest) {
-                const cmd = 'curl' + ' -x ' + pwd + '@127.0.0.1:' + PORT + ' ' + singlePath;
-                console.log(cmd);
-                const {stdout, stderr} = await exec(cmd)
+                const [user, pass] = pwd.split(':');
+                const res = await axios.get(singlePath,
+                    {
+                        proxy: {
+                            protocol: 'http',
+                            host: '127.0.0.1',
+                            port: PORT,
+                            auth: {
+                                username: user,
+                                password: pass
+                            }
+                        }
+                    })
                     .catch((err) => {
-                        if (err.message.indexOf('HTTP code 407')) return {stdout: AUTH_REQUIRED};
-                        throw err;
+                        return err.response || AUTH_REQUIRED;
                     });
-                console.log('Response =>', stdout);
+                console.log('For:', user, pass, singlePath, 'Response =>', res.status);
 
                 if (pwd === pwdToTest[0]
-                    && stdout === AUTH_REQUIRED) {
+                    && res.data === AUTH_REQUIRED) {
                     console.error('Response must not be', 'HTTP CODE 407');
                     process.exit(5);
                 }
 
                 if (pwd === pwdToTest[1]
-                    && stdout !== AUTH_REQUIRED) {
+                    && res.data !== AUTH_REQUIRED) {
                     console.error('Response must be', 'HTTP CODE 407');
                     process.exit(5);
                 }
@@ -253,11 +287,20 @@ async function test6() {
             console.log('transparent-proxy was started!', server.address());
 
             for (const singlePath of toTest) {
-                const cmd = 'curl' + ' -vv -x 127.0.0.1:' + PORT + ' -k ' + singlePath;
-                console.log(cmd);
-                const {stdout, stderr} = await exec(cmd);
-                console.log('Response =>', stdout);
-                if (JSON.parse(stdout).headers['x-test'] !== 'my async value') {
+                const res = await axios.get(singlePath,
+                    {
+                        proxy: {
+                            protocol: 'http',
+                            host: '127.0.0.1',
+                            port: PORT
+                        }
+                    })
+                    .catch((err) => {
+                        return err.response;
+                    });
+                console.log('For:', singlePath, 'Response =>', JSON.stringify(res.data));
+
+                if (res.data.headers['x-test'] !== 'my async value') {
                     console.error(`Header ${ADDED_HEADER} must have been sent`);
                     process.exit(6);
                 }
@@ -500,7 +543,7 @@ async function main() {
     await test5();
     await test6();
     await test7();
-    // await test8(); //TODO reactivate this, validation doesn't work with curl 7.83
+    // // await test8(); //TODO reactivate this, validation doesn't work with curl 7.83
     await test9();
     // await test10();
     server.close();

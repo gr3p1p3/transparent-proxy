@@ -46,7 +46,6 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
     const remoteID = remoteAddress + SEPARATOR + remotePort;
 
     // logger.log('Received request from', remoteID);
-
     /**
      * @param {Error} err
      */
@@ -298,12 +297,12 @@ module.exports = function onConnectedClientHandling(clientSocket, bridgedConnect
                         if (isLogged instanceof Promise) { //if async operation...
                             isLogged = await isLogged; //...need to resolve promise
                         }
-
                         if (isLogged) {
                             thisTunnel.setUserAuthentication(username);
                             // cleaning data from headers because we dont need to leak this info
                             const headers = Object.assign({}, thisTunnel.request.headers);
                             delete headers[PROXY_AUTH.toLowerCase()];
+
                             const newData = rebuildHeaders(headers, data);
                             return handleProxyTunnel(split, newData);
                         }
